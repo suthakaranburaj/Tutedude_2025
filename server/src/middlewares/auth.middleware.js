@@ -1,8 +1,8 @@
-import sendResponse from "../utils/apiResonse.js";
+import { sendResponse } from "../utils/apiResonse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/userModal.js";
 import { statusType } from "../utils/statusType.js"; // Make sure this is correctly imported
+import User from "../models/user.js";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const token =
