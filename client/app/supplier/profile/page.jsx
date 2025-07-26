@@ -16,13 +16,30 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-
+import { getSupplierProfile } from "@/services/supplier";
 export default function SupplierProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const data = await getSupplierProfile();
+      console.log(data,'ofewofi');
+      setProfile(data.data);
+      setEditForm(data.data);
+      setLoading(false);
+    };
+    fetchProfile();
+  }, []);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+      </div>
+    );
+  }
   // Mock data for demonstration
   const mockProfile = {
     id: "SUP001",
@@ -48,14 +65,14 @@ export default function SupplierProfile() {
     ],
   };
 
-  useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      setProfile(mockProfile);
-      setEditForm(mockProfile);
-      setLoading(false);
-    }, 800);
-  }, []);
+  // useEffect(() => {
+  //   // Simulate API fetch
+  //   setTimeout(() => {
+  //     setProfile(mockProfile);
+  //     setEditForm(mockProfile);
+  //     setLoading(false);
+  //   }, 800);
+  // }, []);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -193,7 +210,7 @@ export default function SupplierProfile() {
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   Personal Information
                 </h3>
-                {!isEditing ? (
+                {/* {!isEditing ? (
                   <button
                     onClick={handleEdit}
                     className="flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
@@ -218,7 +235,7 @@ export default function SupplierProfile() {
                       Cancel
                     </button>
                   </div>
-                )}
+                )} */}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

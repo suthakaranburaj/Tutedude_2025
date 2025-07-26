@@ -49,10 +49,10 @@ export default function RegisterPage() {
       setError('Phone Number is required')
       return false
     }
-    if (!/^\d{10}$/.test(formData.phone)) {
-      setError('Please enter a valid 10-digit phone number')
-      return false
-    }
+    // if (!/^\d{13}$/.test(formData.phone)) {
+    //   setError('Please enter a valid 13-digit phone number')
+    //   return false
+    // }
     if (formData.pin.length < 4) {
       setError('PIN must be at least 4 characters long')
       return false
@@ -169,7 +169,7 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter your phone number"
-                    maxLength="10"
+                    maxLength="13"
                   />
                 </div>
               </div>

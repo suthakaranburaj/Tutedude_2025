@@ -11,6 +11,50 @@ const supplierSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
+        // New fields to match frontend
+        companyName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        businessAddress: {
+            type: String,
+            required: true
+        },
+        gstNumber: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        panNumber: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        businessType: {
+            type: String,
+            enum: ["Proprietorship", "Partnership", "Private Limited", "LLP", "Other"],
+            default: "Proprietorship"
+        },
+        registrationDate: {
+            type: Date,
+            required: true
+        },
+        documents: [
+            {
+                name: String,
+                status: {
+                    type: String,
+                    enum: ["pending", "verified", "rejected"],
+                    default: "pending"
+                },
+                uploaded: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+        // Existing fields
         inventory: [inventoryItemSchema],
         pricePredictionModel: String,
         dashboardStats: {

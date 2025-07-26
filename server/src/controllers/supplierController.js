@@ -7,21 +7,38 @@ import { statusType } from "../utils/statusType.js";
 // Create or update supplier profile
 export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-    const { deliveryRadius, pricePredictionModel } = req.body;
+    const {
+        deliveryRadius,
+        pricePredictionModel,
+        // New fields
+        companyName,
+        businessAddress,
+        gstNumber,
+        panNumber,
+        businessType,
+        registrationDate,
+        documents
+    } = req.body;
 
-    // Validate delivery radius
+    // Validate required fields
     if (
         !deliveryRadius ||
         !deliveryRadius.radiusInKm ||
         !deliveryRadius.coordinates ||
         !deliveryRadius.coordinates.lat ||
-        !deliveryRadius.coordinates.lng
+        !deliveryRadius.coordinates.lng ||
+        !companyName ||
+        !businessAddress ||
+        !gstNumber ||
+        !panNumber ||
+        !businessType ||
+        !registrationDate
     ) {
         return sendResponse(
             res,
             false,
             null,
-            "Delivery radius with coordinates is required",
+            "All required fields are missing",
             statusType.BAD_REQUEST
         );
     }
@@ -29,6 +46,13 @@ export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
     const supplierData = {
         userId,
         deliveryRadius,
+        companyName,
+        businessAddress,
+        gstNumber,
+        panNumber,
+        businessType,
+        registrationDate: new Date(registrationDate),
+        ...(documents && { documents }),
         ...(pricePredictionModel && { pricePredictionModel })
     };
 
@@ -220,6 +244,49 @@ export const getOrderHistory = asyncHandler(async (req, res) => {
         true,
         supplier.orderHistory,
         "Order history retrieved",
+        statusType.SUCCESS
+    );
+});
+
+// Add new controller function
+export const getSupplierProfile = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const supplier = await Supplier.findOne({ userId }).populate({
+        path: "userId",
+        select: "name email phone"
+    });
+
+    if (!supplier) {
+        return sendResponse(res, false, null, "Supplier profile not found", statusType.NOT_FOUND);
+    }
+
+    // Format response to match frontend
+    const profileResponse = {
+        id: supplier._id,
+        name: supplier.userId.name,
+        email: supplier.userId.email,
+        phone: supplier.userId.phone,
+        company: supplier.companyName,
+        address: supplier.businessAddress,
+        gstNumber: supplier.gstNumber,
+        panNumber: supplier.panNumber,
+        businessType: supplier.businessType,
+        registrationDate: supplier.registrationDate,
+        deliveryRadius: supplier.deliveryRadius.radiusInKm,
+        documents: supplier.documents,
+        // Mocked values for frontend
+        rating: 4.8,
+        totalOrders: 156,
+        completedOrders: 142,
+        totalRevenue: 2450000
+    };
+
+    return sendResponse(
+        res,
+        true,
+        profileResponse,
+        "Profile retrieved successfully",
         statusType.SUCCESS
     );
 });
