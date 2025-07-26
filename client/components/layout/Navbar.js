@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Menu, X, User, LogOut, Sparkles } from "lucide-react";
 
 export function Navbar() {
-  const { logout } = useAuth();
+  // const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
@@ -80,7 +80,13 @@ export function Navbar() {
 
   const roleLinks = getRoleLinks();
   const profileUrl = getProfileUrl();
-
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("User");
+    setUser(null);
+    // Optionally redirect to login page
+    // window.location.href = "/login";
+  };
   return (
     <nav
       className={`transition-all duration-300 z-50 ${
