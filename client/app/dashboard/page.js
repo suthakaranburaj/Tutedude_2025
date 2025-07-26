@@ -41,7 +41,7 @@ export default function Dashboard() {
               Welcome back, {user.name}! 👋
             </h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Here's what's happening with your account today.
+              Here’s how you’re contributing to a transparent and trusted street food ecosystem today.
             </p>
           </div>
 

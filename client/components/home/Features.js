@@ -20,62 +20,62 @@ export function Features() {
   const features = [
     {
       id: 0,
-      title: 'Authentication',
-      description: 'Complete user authentication system with JWT and OTP verification main branch changes',
+      title: 'Verified Supplier Listings',
+      description: 'Browse and connect with trusted, verified suppliers for all your raw material needs.',
       icon: Shield,
       color: 'from-green-500 to-emerald-600',
       features: [
-        'JWT-based authentication',
-        'Email OTP verification',
-        'Password hashing with bcrypt',
-        'Protected routes middleware',
-        'Session management',
-        'Social login ready'
+        'Verified supplier profiles',
+        'Transparent pricing',
+        'Supplier ratings & reviews',
+        'Direct contact options',
+        'Location-based search',
+        'Quality assurance'
       ]
     },
     {
       id: 1,
-      title: 'Modern UI/UX',
-      description: 'Beautiful, responsive design with dark/light theme support and Material-UI components',
-      icon: Palette,
+      title: 'Vendor Empowerment',
+      description: 'Tools and resources for street food vendors to source materials affordably and reliably.',
+      icon: Users,
       color: 'from-purple-500 to-pink-600',
       features: [
-        'Responsive design',
-        'Dark/light theme toggle',
-        'Material-UI components',
-        'Smooth animations',
-        'Modern icons',
-        'Accessibility compliant'
+        'Easy vendor registration',
+        'Bulk order requests',
+        'Order tracking',
+        'Supplier comparison',
+        'Community support',
+        'Growth analytics'
       ]
     },
     {
       id: 2,
-      title: 'Performance',
-      description: 'Optimized for speed and scalability with Next.js 14 features',
+      title: 'Transparent Transactions',
+      description: 'Clear, fair, and secure transactions between vendors and suppliers.',
       icon: Zap,
       color: 'from-blue-500 to-cyan-600',
       features: [
-        'Next.js 14 App Router',
-        'Server-side rendering',
-        'Static generation',
-        'Image optimization',
-        'Code splitting',
-        'Performance monitoring main branch changes'
+        'Order history',
+        'Secure payments',
+        'Dispute resolution',
+        'Real-time notifications',
+        'Digital receipts',
+        'Support for local languages'
       ]
     },
     {
       id: 3,
-      title: 'Developer Experience',
-      description: 'Clean code structure and comprehensive documentation',
-      icon: Code,
+      title: 'Community & Support',
+      description: 'A growing network of vendors and suppliers supporting each other.',
+      icon: Users,
       color: 'from-orange-500 to-red-600',
       features: [
-        'TypeScript ready',
-        'ESLint configuration',
-        'Prettier formatting',
-        'Component library',
-        'API documentation',
-        'Deployment guides'
+        'Vendor-supplier chat',
+        'Help center',
+        'Workshops & resources',
+        'Feedback system',
+        'Growth stories',
+        'Local events'
       ]
     }
   ]
@@ -88,12 +88,11 @@ export function Features() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Everything you need to{' '}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              build amazing apps
+              build trust & grow
             </span>
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Our comprehensive template includes all the essential features and components 
-            you need to create production-ready applications in record time.
+            Our platform brings together street food vendors and suppliers, making sourcing transparent, affordable, and reliable for everyone.
           </p>
         </div>
 
@@ -171,10 +170,10 @@ export function Features() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Ready to get started?
+                      Ready to join our platform?
                     </p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Start building today
+                      Connect with vendors & suppliers today
                     </p>
                   </div>
                   <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
@@ -189,27 +188,27 @@ export function Features() {
         {/* Additional Features Grid */}
         <div className="mt-20">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">
-            More amazing features
+            More ways we support your business
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Database,
-                title: 'Database Ready',
-                description: 'MongoDB integration with Mongoose ODM for data persistence',
+                title: 'Smart Inventory Management',
+                description: 'Track your inventory, orders, and supplier relationships in one place',
                 color: 'from-emerald-500 to-teal-600'
               },
               {
                 icon: Smartphone,
-                title: 'Mobile First',
-                description: 'Responsive design that works perfectly on all devices',
+                title: 'Mobile-First Experience',
+                description: 'Access the platform from anywhere - perfect for vendors on the go',
                 color: 'from-indigo-500 to-purple-600'
               },
               {
                 icon: Users,
-                title: 'User Management',
-                description: 'Complete user profile and account management system',
+                title: 'Community Network',
+                description: 'Connect with other vendors and suppliers in your local area',
                 color: 'from-pink-500 to-rose-600'
               }
             ].map((feature, index) => {

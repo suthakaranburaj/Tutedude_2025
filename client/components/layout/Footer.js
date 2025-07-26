@@ -24,16 +24,15 @@ export function Footer() {
               </div>
               <div>
                 <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Hackathon Template
+                  Street Food Supply Connect
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Build. Deploy. Win.
+                  Transparency for Vendors & Suppliers
                 </p>
               </div>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
-              A comprehensive, production-ready Next.js template designed specifically for hackathons and rapid prototyping. 
-              Build amazing applications with modern tech stack and beautiful UI.
+              A digital platform dedicated to bringing transparency and trust between street food vendors, suppliers, and users. Empowering local businesses to connect, source, and grow together.
             </p>
             <div className="flex space-x-4">
               <a
@@ -164,12 +163,12 @@ export function Footer() {
         <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-600 dark:text-gray-300 text-sm">
-              © {currentYear} Hackathon Template. All rights reserved.
+              © {currentYear} Street Food Supply Connect. All rights reserved.
             </p>
             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
               <span>Made with</span>
               <Heart className="w-4 h-4 text-red-500 fill-current" />
-              <span>for the hackathon community</span>
+              <span>for local vendors & suppliers</span>
             </div>
           </div>
         </div>

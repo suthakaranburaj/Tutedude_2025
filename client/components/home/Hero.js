@@ -38,25 +38,24 @@ export function Hero() {
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 mb-8">
             <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2" />
             <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-              🚀 Perfect for Hackathons & Rapid Prototyping
+              Empowering Vendors & Suppliers
             </span>
           </div>
 
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Build Amazing Apps
+              Street Food Supply Connect
             </span>
             <br />
             <span className="text-gray-700 dark:text-gray-300">
-              in Record Time
+              Transparency. Trust. Growth.
             </span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-            A comprehensive Next.js template with authentication, responsive design, and modern UI components. 
-            Perfect for hackathons, MVPs, and production applications.
+            A platform dedicated to connecting street food vendors and suppliers, fostering transparency, trust, and affordable sourcing for all.
           </p>
 
           {/* Feature Carousel */}

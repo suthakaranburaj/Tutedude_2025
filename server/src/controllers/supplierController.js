@@ -112,8 +112,10 @@ export const updateInventoryItem = asyncHandler(async (req, res) => {
     const supplier = await Supplier.findOneAndUpdate(
         { userId },
         {
-            $set: updateFields,
-            $set: { "dashboardStats.lastRestocked": Date.now() }
+            $set: {
+                ...updateFields,
+                "dashboardStats.lastRestocked": Date.now()
+            }
         },
         {
             new: true,
