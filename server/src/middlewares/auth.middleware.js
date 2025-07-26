@@ -63,4 +63,15 @@ const supplierCheck = (req, res, next) => {
     }
     next();
 };
-export { verifyJWT, supplierCheck };
+
+
+const agentCheck = (req, res, next) => {
+    if (req.user.role !== "agent") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied. agent role required"
+        });
+    }
+    next();
+};
+export { verifyJWT, supplierCheck,agentCheck };

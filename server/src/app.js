@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import { userRoute } from "./routes/userRoute.js";
 import vendorRoutes from "./routes/vendorRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
+import agentRoutes from "./routes/agentRoutes.js";
 import { verifyJWT } from "./middlewares/auth.middleware.js";
 
 const app = express();
@@ -22,5 +23,6 @@ app.use("/api/users", userRoute);
 app.use(verifyJWT);
 app.use('/api/vendor', vendorRoutes);
 app.use("/api/supplier", supplierRoutes);
+app.use("/api/agent", agentRoutes);
 
 export { app };

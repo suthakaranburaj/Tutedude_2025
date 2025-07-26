@@ -1,13 +1,7 @@
 // models/supplier.js
 import mongoose from "mongoose";
+import {inventoryItemSchema} from "./inventoryItem.js"; 
 
-const inventoryItemSchema = new mongoose.Schema({
-    itemName: { type: String, required: true },
-    quantity: { type: Number, required: true, min: 0 },
-    unit: { type: String, required: true, enum: ["kg", "g", "lb", "pieces", "liters"] },
-    price: { type: Number, required: true, min: 0 },
-    lastUpdated: { type: Date, default: Date.now }
-});
 
 const supplierSchema = new mongoose.Schema(
     {
