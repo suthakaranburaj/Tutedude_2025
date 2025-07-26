@@ -1,4 +1,4 @@
-export const sendResponse = function (
+const sendResponse = function (
   res,
   status,
   data,
@@ -15,3 +15,5 @@ export const sendResponse = function (
   };
   return res.status(statusCode).json(obj);
 };
+
+export { sendResponse };

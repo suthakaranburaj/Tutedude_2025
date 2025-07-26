@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import sendResponse from "./apiResonse.js"; // If you need it for direct responses in other contexts
+// import sendResponse from "./apiResonse.js"; 
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

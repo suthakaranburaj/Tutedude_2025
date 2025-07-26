@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { userRoute } from "./routes/userRoute.js";
-import vendorRoutes from "./routes/vendorRoutes.js";
+import vendorRoutes from "./routes/vendorRoutes.js";import supplierRoutes from "./routes/supplierRoutes.js";
+import { verifyJWT } from "./middlewares/auth.middleware.js";
+
 const app = express();
 
 app.use(cors({
@@ -16,5 +18,7 @@ app.use(express.static("public"));
 app.use(cookieParser());
 
 app.use("/api/users", userRoute);
-app.use('/api/vendor', vendorRoutes);
+app.use('/api/vendor', vendorRoutes);app.use(verifyJWT);
+app.use("/api/supplier", supplierRoutes);
+
 export { app };
