@@ -47,3 +47,9 @@ export const getOrderHistory = async () => {
   const response = await apiClient.get("/supplier/orders");
   return response.data;
 };
+
+export const getAllSupplier = async () => {
+  const response = await apiClient.get("/vendor/allSupplier");
+
+  return response.data;
+}
