@@ -1,27 +1,43 @@
-// controllers/supplierController.js
 import Supplier from "../models/supplier.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
+import InventoryDetail from "../models/inventorydetails.js";
+import InventoryItem from "../models/inventoryItem.js";
 
 // Create or update supplier profile
 export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
     const userId = req.user._id;
-    const { deliveryRadius, pricePredictionModel } = req.body;
+    const {
+        deliveryRadius,
+        pricePredictionModel,
+        companyName,
+        businessAddress,
+        gstNumber,
+        panNumber,
+        businessType,
+        registrationDate,
+        documents
+    } = req.body;
 
-    // Validate delivery radius
     if (
         !deliveryRadius ||
         !deliveryRadius.radiusInKm ||
         !deliveryRadius.coordinates ||
         !deliveryRadius.coordinates.lat ||
-        !deliveryRadius.coordinates.lng
+        !deliveryRadius.coordinates.lng ||
+        !companyName ||
+        !businessAddress ||
+        !gstNumber ||
+        !panNumber ||
+        !businessType ||
+        !registrationDate
     ) {
         return sendResponse(
             res,
             false,
             null,
-            "Delivery radius with coordinates is required",
+            "All required fields are missing",
             statusType.BAD_REQUEST
         );
     }
@@ -29,6 +45,13 @@ export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
     const supplierData = {
         userId,
         deliveryRadius,
+        companyName,
+        businessAddress,
+        gstNumber,
+        panNumber,
+        businessType,
+        registrationDate: new Date(registrationDate),
+        ...(documents && { documents }),
         ...(pricePredictionModel && { pricePredictionModel })
     };
 
@@ -61,18 +84,21 @@ export const addInventoryItem = asyncHandler(async (req, res) => {
         );
     }
 
-    const newItem = {
+    // Create new InventoryItem document
+    const newItem = new InventoryItem({
         itemName,
         quantity,
         unit,
         price,
         lastUpdated: Date.now()
-    };
+    });
+    await newItem.save();
 
+    // Update supplier with new item reference
     const supplier = await Supplier.findOneAndUpdate(
         { userId },
         {
-            $push: { inventory: newItem },
+            $push: { inventory: newItem._id },
             $inc: { "dashboardStats.totalItems": 1 },
             $set: { "dashboardStats.lastRestocked": Date.now() }
         },
@@ -82,7 +108,7 @@ export const addInventoryItem = asyncHandler(async (req, res) => {
     return sendResponse(
         res,
         true,
-        supplier,
+        newItem, // Return the created item
         "Inventory item added successfully",
         statusType.CREATED
     );
@@ -103,30 +129,26 @@ export const updateInventoryItem = asyncHandler(async (req, res) => {
         );
     }
 
-    const updateFields = {};
-    for (const [key, value] of Object.entries(updateData)) {
-        updateFields[`inventory.$[elem].${key}`] = value;
-    }
-    updateFields[`inventory.$[elem].lastUpdated`] = Date.now();
+    // Add lastUpdated to the updateData
+    updateData.lastUpdated = Date.now();
 
-    const supplier = await Supplier.findOneAndUpdate(
+    // Update the InventoryItem document directly
+    const updatedItem = await InventoryItem.findByIdAndUpdate(itemId, updateData, { new: true });
+
+    if (!updatedItem) {
+        return sendResponse(res, false, null, "Inventory item not found", statusType.NOT_FOUND);
+    }
+
+    // Update supplier's last restocked time
+    await Supplier.findOneAndUpdate(
         { userId },
-        {
-            $set: {
-                ...updateFields,
-                "dashboardStats.lastRestocked": Date.now()
-            }
-        },
-        {
-            new: true,
-            arrayFilters: [{ "elem._id": itemId }]
-        }
+        { $set: { "dashboardStats.lastRestocked": Date.now() } }
     );
 
     return sendResponse(
         res,
         true,
-        supplier,
+        updatedItem,
         "Inventory item updated successfully",
         statusType.SUCCESS
     );
@@ -155,13 +177,52 @@ export const getSupplierDashboard = asyncHandler(async (req, res) => {
 export const getInventory = asyncHandler(async (req, res) => {
     const userId = req.user._id;
 
-    const supplier = await Supplier.findOne({ userId }).select("inventory");
+    // Find supplier and populate inventory items
+    const supplier = await Supplier.findOne({ userId }).select("inventory").populate({
+        path: "inventory",
+        model: "InventoryItem"
+    });
 
     if (!supplier) {
         return sendResponse(res, false, null, "Supplier profile not found", statusType.NOT_FOUND);
     }
 
-    return sendResponse(res, true, supplier.inventory, "Inventory retrieved", statusType.SUCCESS);
+    const inventoryItems = supplier.inventory;
+    if (inventoryItems.length === 0) {
+        return sendResponse(res, true, [], "Inventory retrieved", statusType.SUCCESS);
+    }
+
+    // Get inventory details for these items
+    const inventoryItemIds = inventoryItems.map((item) => item._id);
+    const inventoryDetails = await InventoryDetail.find({
+        productId: { $in: inventoryItemIds }
+    });
+
+    // Create a map for quick lookup: productId -> details
+    const detailsMap = new Map();
+    inventoryDetails.forEach((detail) => {
+        const key = detail.productId.toString();
+        if (!detailsMap.has(key)) {
+            detailsMap.set(key, detail);
+        }
+    });
+
+    // Merge inventory items with their details
+    const inventoryWithDetails = inventoryItems.map((item) => {
+        const itemId = item._id.toString();
+        return {
+            ...item.toObject(),
+            details: detailsMap.get(itemId) || null
+        };
+    });
+
+    return sendResponse(
+        res,
+        true,
+        inventoryWithDetails,
+        "Inventory retrieved with details",
+        statusType.SUCCESS
+    );
 });
 
 // Update delivery radius
@@ -221,5 +282,89 @@ export const getOrderHistory = asyncHandler(async (req, res) => {
         supplier.orderHistory,
         "Order history retrieved",
         statusType.SUCCESS
+    );
+});
+
+// Get supplier profile
+export const getSupplierProfile = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    const supplier = await Supplier.findOne({ userId }).populate({
+        path: "userId",
+        select: "name email phone"
+    });
+
+    if (!supplier) {
+        return sendResponse(res, false, null, "Supplier profile not found", statusType.NOT_FOUND);
+    }
+
+    const profileResponse = {
+        id: supplier._id,
+        name: supplier.userId.name,
+        email: supplier.userId.email,
+        phone: supplier.userId.phone,
+        company: supplier.companyName,
+        address: supplier.businessAddress,
+        gstNumber: supplier.gstNumber,
+        panNumber: supplier.panNumber,
+        businessType: supplier.businessType,
+        registrationDate: supplier.registrationDate,
+        deliveryRadius: supplier.deliveryRadius.radiusInKm,
+        documents: supplier.documents,
+        rating: 4.8,
+        totalOrders: 156,
+        completedOrders: 142,
+        totalRevenue: 2450000
+    };
+
+    return sendResponse(
+        res,
+        true,
+        profileResponse,
+        "Profile retrieved successfully",
+        statusType.SUCCESS
+    );
+});
+
+// Get all suppliers with verified inventory
+export const getAllSupplier = asyncHandler(async (req, res) => {
+    const allSuppliers = await Supplier.find().lean();
+
+    const processedSuppliers = [];
+
+    for (const supplier of allSuppliers) {
+        const inventoryItemIds = supplier.inventory;
+
+        if (!inventoryItemIds || inventoryItemIds.length === 0) {
+            supplier.verifiedInventory = [];
+            processedSuppliers.push(supplier);
+            continue;
+        }
+
+        // Get verified inventory detail entries
+        const verifiedDetails = await InventoryDetail.find({
+            productId: { $in: inventoryItemIds },
+            verificationStatus: "verified"
+        }).lean();
+
+        const verifiedItemIds = verifiedDetails.map((detail) => detail.productId.toString());
+
+        // Filter inventory to only include verified ones
+        const verifiedInventory = await InventoryItem.find({
+            _id: { $in: verifiedItemIds }
+        }).lean();
+
+        // Append only verified inventory
+        supplier.verifiedInventory = verifiedInventory;
+
+        processedSuppliers.push(supplier);
+    }
+
+    sendResponse(
+        res,
+        true,
+        processedSuppliers,
+        "Suppliers with verified inventory retrieved successfully",
+        statusType.OK
     );
 });
