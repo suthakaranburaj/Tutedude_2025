@@ -16,6 +16,7 @@ import {
   Edit,
 } from "lucide-react";
 import { getSupplierOrders, updateOrderStatus } from "@/services/order";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function SupplierOrders() {
   const [orders, setOrders] = useState([]);
@@ -147,6 +148,7 @@ export default function SupplierOrders() {
 
   return (
     <div className="p-4 md:p-8">
+      <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -325,7 +327,7 @@ export default function SupplierOrders() {
                   filteredOrders.map((order) => (
                     <tr
                       key={order._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-750"
+                      className="transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         {truncateId(order._id)}

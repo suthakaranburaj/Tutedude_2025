@@ -17,6 +17,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { getSupplierProfile } from "@/services/supplier";
+import { Toaster, toast } from "react-hot-toast";
 export default function SupplierProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function SupplierProfile() {
 
   return (
     <div className="p-4 md:p-8">
+      <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -182,15 +184,15 @@ export default function SupplierProfile() {
 
               {/* Quick Actions */}
               <div className="mt-6 space-y-2">
-                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                   <Shield className="w-5 h-5" />
                   <span>Security Settings</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                   <CreditCard className="w-5 h-5" />
                   <span>Payment Methods</span>
                 </button>
-                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <button className="w-full flex items-center gap-3 p-3 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                   <Settings className="w-5 h-5" />
                   <span>Preferences</span>
                 </button>

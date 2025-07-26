@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { addInventoryItem } from "@/services/supplier";
 import { getInventory } from "@/services/supplier";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function SupplierInventory() {
   const [inventory, setInventory] = useState([]);
@@ -92,8 +93,10 @@ export default function SupplierInventory() {
       setInventory((prev) => [newItem, ...prev]);
       setIsAddModalOpen(false);
       setAddForm({ itemName: "", quantity: "", unit: "kg", price: "" });
+      toast.success("Item added successfully!");
     } catch (err) {
       setAddError(err?.error || "Failed to add item");
+      toast.error(err?.error || "Failed to add item");
     } finally {
       setAddLoading(false);
     }
@@ -123,6 +126,7 @@ export default function SupplierInventory() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Toaster position="top-right" />
       {/* Add Inventory Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -306,18 +310,24 @@ export default function SupplierInventory() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
                   <Filter className="w-4 h-4" />
                   Filter
                 </button>
                 <button
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                   onClick={() => {
                     setLoading(true);
-                    getInventory().then((res) => {
-                      setInventory(res.data.map(transformInventoryItem));
-                      setLoading(false);
-                    });
+                    getInventory()
+                      .then((res) => {
+                        setInventory(res.data.map(transformInventoryItem));
+                        setLoading(false);
+                        toast.success("Inventory refreshed!");
+                      })
+                      .catch(() => {
+                        setLoading(false);
+                        toast.error("Failed to refresh inventory");
+                      });
                   }}
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -367,7 +377,7 @@ export default function SupplierInventory() {
                   {filteredInventory.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-750"
+                      className="transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
