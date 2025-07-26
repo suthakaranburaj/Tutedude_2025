@@ -3,6 +3,8 @@ import Supplier from "../models/supplier.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
+import InventoryDetail from "../models/inventorydetails.js";
+import InventoryItem from "../models/inventoryItem.js";
 
 // Create or update supplier profile
 export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
@@ -288,5 +290,48 @@ export const getSupplierProfile = asyncHandler(async (req, res) => {
         profileResponse,
         "Profile retrieved successfully",
         statusType.SUCCESS
+    );
+});
+
+
+export const getAllSupplier = asyncHandler(async (req, res) => {
+    const allSuppliers = await Supplier.find().lean();
+
+    const processedSuppliers = [];
+
+    for (const supplier of allSuppliers) {
+        const inventoryItemIds = supplier.inventory;
+
+        if (!inventoryItemIds || inventoryItemIds.length === 0) {
+            supplier.verifiedInventory = [];
+            processedSuppliers.push(supplier);
+            continue;
+        }
+
+        // Get verified inventory detail entries
+        const verifiedDetails = await InventoryDetail.find({
+            productId: { $in: inventoryItemIds },
+            verificationStatus: "verified"
+        }).lean();
+
+        const verifiedItemIds = verifiedDetails.map((detail) => detail.productId.toString());
+
+        // Filter inventory to only include verified ones
+        const verifiedInventory = await InventoryItem.find({
+            _id: { $in: verifiedItemIds }
+        }).lean();
+
+        // Append only verified inventory
+        supplier.verifiedInventory = verifiedInventory;
+
+        processedSuppliers.push(supplier);
+    }
+
+    sendResponse(
+        res,
+        true,
+        processedSuppliers,
+        "Suppliers with verified inventory retrieved successfully",
+        statusType.OK
     );
 });

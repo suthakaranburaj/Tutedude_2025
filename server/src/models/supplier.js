@@ -1,6 +1,6 @@
 // models/supplier.js
 import mongoose from "mongoose";
-import {inventoryItemSchema} from "./inventoryItem.js"; 
+import { inventoryItemSchema } from "./inventoryItem.js";
 
 
 const supplierSchema = new mongoose.Schema(
@@ -55,7 +55,7 @@ const supplierSchema = new mongoose.Schema(
             }
         ],
         // Existing fields
-        inventory: [inventoryItemSchema],
+        inventory: [{ type: mongoose.Schema.Types.ObjectId, ref: "InventoryItem" }],
         pricePredictionModel: String,
         dashboardStats: {
             totalItems: { type: Number, default: 0 },
