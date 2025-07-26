@@ -4,11 +4,11 @@ import jwt from "jsonwebtoken";
 import { statusType } from "../utils/statusType.js"; // Make sure this is correctly imported
 import User from "../models/user.js";
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+const verifyJWT = asyncHandler(async (req, res, next) => {
   const token =
-    req.cookies?.accessToken ||
-    req.header("Authorization")?.replace("Bearer ", "");
-
+  req.cookies?.accessToken ||
+  req.header("Authorization")?.replace("Bearer ", "");
+  
   if (!token) {
     return sendResponse(
       res,
@@ -25,7 +25,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     // const user = await User.findById(decodedToken?._id).select(
     //   "-password -refreshToken"
     // );
-    const user = await User.findById(decodedToken?._id).select(
+    const user = await User.findById(decodedToken?.user_id).select(
       "-pin"
     );
 
@@ -51,3 +51,14 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     );
   }
 });
+
+const supplierCheck = (req, res, next) => {
+    if (req.user.role !== "supplier") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied. Supplier role required"
+        });
+    }
+    next();
+};
+export { verifyJWT, supplierCheck };
