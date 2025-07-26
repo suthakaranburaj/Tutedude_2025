@@ -43,10 +43,10 @@ export function Navbar() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Hackathon Template
+                  Street Food Supply Connect
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
-                  Build. Deploy. Win.
+                  Transparency for Vendors & Suppliers
                 </span>
               </div>
             </Link>
@@ -61,13 +61,13 @@ export function Navbar() {
               Home
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link
+            {/* <Link
               href="/features"
               className="relative text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
             >
               Features
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
+            </Link> */}
             <Link
               href="/about"
               className="relative text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
@@ -75,13 +75,13 @@ export function Navbar() {
               About
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
             </Link>
-            <Link
+            {/* <Link
               href="/contact"
               className="relative text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium"
             >
               Contact
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 group-hover:w-full"></span>
-            </Link>
+            </Link> */}
           </div>
 
           {/* Right side - Auth & Theme */}

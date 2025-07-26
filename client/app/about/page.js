@@ -10,10 +10,10 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              About This Template
+              About Street Food Supply Connect
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
-              Built for developers who want to focus on building, not setting up
+              Our mission is to bring transparency, trust, and growth to the street food ecosystem by connecting vendors, suppliers, and users on a single digital platform.
             </p>
           </div>
 
@@ -36,12 +36,11 @@ export default function AboutPage() {
               <div className="flex items-center mb-4">
                 <Shield className="w-8 h-8 text-green-600 mr-3" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Security First
+                  Verified & Trusted Connections
                 </h2>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                JWT authentication, password hashing, OTP verification, and protected 
-                routes ensure your application is secure from the ground up.
+                We ensure that every supplier and vendor on our platform is verified, so you can source and sell with confidence.
               </p>
             </div>
 
@@ -49,12 +48,11 @@ export default function AboutPage() {
               <div className="flex items-center mb-4">
                 <Zap className="w-8 h-8 text-yellow-600 mr-3" />
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Fast Development
+                  Fast & Transparent Sourcing
                 </h2>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                Pre-built components, authentication system, and responsive design 
-                let you focus on your core features instead of boilerplate code.
+                Our platform makes it easy for vendors to find suppliers, compare prices, and place orders quickly and transparently.
               </p>
             </div>
 
@@ -66,32 +64,27 @@ export default function AboutPage() {
                 </h2>
               </div>
               <p className="text-gray-600 dark:text-gray-400">
-                Built for the hackathon community. Share, contribute, and help 
-                others build amazing applications faster.
+                We are building a supportive community where vendors and suppliers can share feedback, grow together, and support each other.
               </p>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              Why This Template?
+              Why Street Food Supply Connect?
             </h2>
             <div className="space-y-4 text-gray-600 dark:text-gray-400">
               <p>
-                <strong>Time-Saving:</strong> Skip the tedious setup process and jump straight into building your features. 
-                This template includes authentication, database setup, email functionality, and responsive design out of the box.
+                <strong>Transparency:</strong> Every transaction, profile, and review is open and clear, so you always know who you’re working with.
               </p>
               <p>
-                <strong>Production-Ready:</strong> Built with security, performance, and scalability in mind. 
-                The code follows best practices and is ready for deployment.
+                <strong>Empowerment:</strong> We give vendors and suppliers the tools they need to succeed, from order management to analytics.
               </p>
               <p>
-                <strong>Customizable:</strong> Easy to modify and extend. All components are modular and well-documented, 
-                making it simple to adapt to your specific needs.
+                <strong>Community:</strong> Our platform is built for and by the street food community. Your feedback shapes our future.
               </p>
               <p>
-                <strong>Modern:</strong> Uses the latest technologies and frameworks, ensuring your application 
-                stays current and maintainable.
+                <strong>Growth:</strong> We help local businesses grow by making sourcing easier, cheaper, and more reliable.
               </p>
             </div>
           </div>
