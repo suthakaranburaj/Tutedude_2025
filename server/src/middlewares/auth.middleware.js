@@ -1,3 +1,5 @@
+//auth.middleware.js
+
 import { sendResponse } from "../utils/apiResonse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";

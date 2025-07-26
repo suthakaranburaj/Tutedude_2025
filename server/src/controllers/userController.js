@@ -5,6 +5,8 @@ import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
 import { validatePhone } from "../helper/common.js";
 import { createToken } from "../helper/common.js";
+import Vendor from "../models/vendor.js"; 
+
 
 const registerUser = asyncHandler(async (req, res) => {
     const { name, phone, pin, role } = req.body;
@@ -52,14 +54,21 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Save to DB
     await user.save();
-
+    if (role === "vendor") {
+    const vendor = new Vendor({
+      userId: user._id,
+      businessName: `${name}'s Business`,
+      // Add other default values as needed
+    });
+    await vendor.save();
+  }
     // Generate token
     const token = createToken(user._id);
 
     // Prepare response data (exclude PIN)
     const userData = user.toObject();
     delete userData.pin;
-
+    
     return sendResponse(
         res,
         true,
@@ -106,6 +115,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // Send response
   return sendResponse(res, true, { ...userData, token }, "Login Successful", statusType.SUCCESS);
 });
+
 
 
 export { registerUser, loginUser };
