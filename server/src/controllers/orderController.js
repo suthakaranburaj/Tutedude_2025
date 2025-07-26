@@ -8,7 +8,7 @@ import { statusType } from "../utils/statusType.js";
 
 // Create a new order
 export const createOrder = asyncHandler(async (req, res) => {
-    const vendorId = req.user._id;
+    const userId = req.user._id;
     const {
         supplierId,
         items,
@@ -30,7 +30,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
 
     // Check vendor status
-    const vendor = await Vendor.findById(vendorId);
+    // console.log("User ID:", userId);
+    // console.log("Supplier ID:", supplierId);
+    const vendor = await Vendor.findOne({ userId: userId });
+    // console.log("Vendor:", vendor);
     if (!vendor || !vendor.canOrderSupply) {
         return sendResponse(
             res,
@@ -44,9 +47,10 @@ export const createOrder = asyncHandler(async (req, res) => {
     // Calculate total and validate items
     let totalAmount = 0;
     const orderItems = [];
-
+    const supplier = await Supplier.findOne({ userId: supplierId });
+    console.log("Supplier:", supplier);
     for (const item of items) {
-        const inventoryItem = await InventoryItem.findById(item.itemId);
+        const inventoryItem = supplier.inventory.find((i) => i._id.toString() === item.itemId);
         if (!inventoryItem) {
             return sendResponse(
                 res,
@@ -81,7 +85,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     // Create order
     const newOrder = new Order({
-        vendor: vendorId,
+        vendor: userId,
         supplier: supplierId,
         items: orderItems,
         totalAmount,
@@ -97,27 +101,34 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // Update vendor and supplier
-    await Vendor.findByIdAndUpdate(vendorId, {
-        $push: {
-            orderHistory: savedOrder._id,
-            orderTracking: {
-                orderId: savedOrder._id,
-                status: "pending",
-                estimatedDelivery: preferredDeliveryTime
+    // Update Vendor order history
+    await Vendor.findOneAndUpdate(
+        { user: userId },
+        {
+            $push: {
+                orderHistory: savedOrder._id,
+                orderTracking: {
+                    orderId: savedOrder._id,
+                    status: "pending",
+                    estimatedDelivery: preferredDeliveryTime
+                }
             }
         }
-    });
+    );
 
+    // Update Supplier order history
     await Supplier.findByIdAndUpdate(supplierId, {
         $push: { orderHistory: savedOrder._id }
     });
 
-    // Update inventory quantities
+    // Update inventory quantities inside Supplier document
     for (const item of items) {
-        await InventoryItem.findByIdAndUpdate(item.itemId, {
-            $inc: { quantity: -item.quantity }
-        });
+        await Supplier.updateOne(
+            { userId: supplierId, "inventory._id": item.itemId },
+            {
+                $inc: { "inventory.$.quantity": -item.quantity }
+            }
+        );
     }
 
     return sendResponse(res, true, savedOrder, "Order created successfully", statusType.CREATED);
@@ -127,7 +138,7 @@ export const createOrder = asyncHandler(async (req, res) => {
 export const updateOrderStatus = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
     const { status, estimatedDelivery } = req.body;
-    const userId = req.user._id; // Could be supplier or vendor
+    const userId = req.user._id;
 
     if (!status) {
         return sendResponse(res, false, null, "Status is required", statusType.BAD_REQUEST);
@@ -148,16 +159,9 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
     const updateData = { status };
     if (estimatedDelivery) updateData.estimatedDelivery = estimatedDelivery;
+    if (status === "delivered") updateData.actualDelivery = Date.now();
 
-    // Set actual delivery time if status is delivered
-    if (status === "delivered") {
-        updateData.actualDelivery = Date.now();
-    }
-
-    const updatedOrder = await Order.findByIdAndUpdate(orderId, updateData, { new: true }).populate(
-        "vendor supplier",
-        "businessName userId"
-    );
+    const updatedOrder = await Order.findByIdAndUpdate(orderId, updateData, { new: true });
 
     if (!updatedOrder) {
         return sendResponse(res, false, null, "Order not found", statusType.NOT_FOUND);
@@ -165,12 +169,13 @@ export const updateOrderStatus = asyncHandler(async (req, res) => {
 
     // Update vendor's order tracking
     await Vendor.findOneAndUpdate(
-        { _id: updatedOrder.vendor, "orderTracking.orderId": orderId },
+        { userId: updatedOrder.vendor, "orderTracking.orderId": orderId },
         {
             $set: {
                 "orderTracking.$.status": status,
-                "orderTracking.$.estimatedDelivery":
-                    estimatedDelivery || updatedOrder.orderTracking?.estimatedDelivery
+                ...(estimatedDelivery && {
+                    "orderTracking.$.estimatedDelivery": estimatedDelivery
+                })
             }
         }
     );
@@ -183,9 +188,8 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
 
     const order = await Order.findById(orderId)
-        .populate("vendor", "businessName operatingLocations")
-        .populate("supplier", "deliveryRadius userId")
-        .populate("items.itemId", "itemName unit");
+        .populate("vendor", "businessName")
+        .populate("supplier", "businessName");
 
     if (!order) {
         return sendResponse(res, false, null, "Order not found", statusType.NOT_FOUND);
@@ -196,17 +200,22 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
 
 // Get orders for vendor
 export const getVendorOrders = asyncHandler(async (req, res) => {
-    const vendorId = req.user._id;
+    const userId = req.user._id;
     const { status, limit = 10, page = 1 } = req.query;
 
-    const filter = { vendor: vendorId };
+    const vendor = await Vendor.findOne({ userId });
+    if (!vendor) {
+        return sendResponse(res, false, null, "Vendor not found", statusType.NOT_FOUND);
+    }
+
+    const filter = { vendor: vendor.userId };
     if (status) filter.status = status;
 
     const orders = await Order.find(filter)
         .sort({ createdAt: -1 })
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))
-        .populate("supplier", "userId");
+        .populate("supplier", "businessName");
 
     const totalOrders = await Order.countDocuments(filter);
 
@@ -226,10 +235,15 @@ export const getVendorOrders = asyncHandler(async (req, res) => {
 
 // Get orders for supplier
 export const getSupplierOrders = asyncHandler(async (req, res) => {
-    const supplierId = req.user._id; // Assuming supplier is authenticated
+    const userId = req.user._id;
     const { status, limit = 10, page = 1 } = req.query;
 
-    const filter = { supplier: supplierId };
+    const supplier = await Supplier.findOne({ userId });
+    if (!supplier) {
+        return sendResponse(res, false, null, "Supplier not found", statusType.NOT_FOUND);
+    }
+
+    const filter = { supplier: supplier.userId };
     if (status) filter.status = status;
 
     const orders = await Order.find(filter)
@@ -257,11 +271,16 @@ export const getSupplierOrders = asyncHandler(async (req, res) => {
 // Cancel order
 export const cancelOrder = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
-    const vendorId = req.user._id;
+    const userId = req.user._id;
+
+    const vendor = await Vendor.findOne({ userId });
+    if (!vendor) {
+        return sendResponse(res, false, null, "Vendor not found", statusType.NOT_FOUND);
+    }
 
     const order = await Order.findOne({
         _id: orderId,
-        vendor: vendorId,
+        vendor: vendor.userId,
         status: { $in: ["pending", "accepted"] }
     });
 
@@ -275,7 +294,6 @@ export const cancelOrder = asyncHandler(async (req, res) => {
         );
     }
 
-    // Update order status
     const updatedOrder = await Order.findByIdAndUpdate(
         orderId,
         { status: "cancelled" },
@@ -283,16 +301,17 @@ export const cancelOrder = asyncHandler(async (req, res) => {
     );
 
     // Update vendor tracking
-    await Vendor.findOneAndUpdate(
-        { _id: vendorId, "orderTracking.orderId": orderId },
+    await Vendor.updateOne(
+        { _id: vendor._id, "orderTracking.orderId": orderId },
         { $set: { "orderTracking.$.status": "cancelled" } }
     );
 
-    // Restore inventory quantities
+    // Restore inventory quantities in Supplier's inventory
     for (const item of order.items) {
-        await InventoryItem.findByIdAndUpdate(item.itemId, {
-            $inc: { quantity: item.quantity }
-        });
+        await Supplier.updateOne(
+            { _id: order.supplier, "inventory._id": item.itemId },
+            { $inc: { "inventory.$.quantity": item.quantity } }
+        );
     }
 
     return sendResponse(

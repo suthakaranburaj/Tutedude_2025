@@ -6,6 +6,7 @@ import vendorRoutes from "./routes/vendorRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import agentRoutes from "./routes/agentRoutes.js";
 import { verifyJWT } from "./middlewares/auth.middleware.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 const app = express();
 
@@ -26,5 +27,6 @@ app.use(verifyJWT);
 app.use('/api/vendor', vendorRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/agent", agentRoutes);
+app.use("/api/order", orderRoutes);
 
 export { app };
