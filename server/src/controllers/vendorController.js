@@ -18,19 +18,54 @@ const updateVendorProfile = asyncHandler(async (req, res) => {
     );
   }
 
+  // Try to find existing vendor
   let vendor = await Vendor.findOne({ userId });
 
+  // If vendor doesn't exist, create a new one
   if (!vendor) {
-    return sendResponse(
-      res,
-      false,
-      null,
-      "Vendor profile not found. Please contact support.",
-      statusType.NOT_FOUND
-    );
+    try {
+      // Create new vendor profile with the provided data
+      vendor = new Vendor({
+        userId,
+        ...updateData
+      });
+      
+      // Set default business name if not provided
+      if (!vendor.businessName) {
+        vendor.businessName = `${req.user.name}'s Business`;
+      }
+      
+      // Save the new vendor
+      const newVendor = await vendor.save();
+      
+      return sendResponse(
+        res,
+        true,
+        newVendor,
+        "Vendor profile created successfully",
+        statusType.CREATED
+      );
+    } catch (error) {
+      // Handle creation errors
+      let errorMessage = "Vendor creation failed";
+      if (error.errors) {
+        const firstError = Object.values(error.errors)[0];
+        errorMessage = firstError.message;
+      } else {
+        errorMessage = error.message;
+      }
+      
+      return sendResponse(
+        res,
+        false,
+        null,
+        errorMessage,
+        statusType.BAD_REQUEST
+      );
+    }
   }
 
-  // Validate operatingLocations primary flag
+  // Validate operatingLocations primary flag for existing vendors
   if (updateData.operatingLocations) {
     const primaryLocations = updateData.operatingLocations.filter(
       (loc) => loc.primary
@@ -82,7 +117,6 @@ const updateVendorProfile = asyncHandler(async (req, res) => {
     // Handle validation errors
     let errorMessage = "Validation failed";
     if (error.errors) {
-      // Extract first validation error
       const firstError = Object.values(error.errors)[0];
       errorMessage = firstError.message;
     } else {
