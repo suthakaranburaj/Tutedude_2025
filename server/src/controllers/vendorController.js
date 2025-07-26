@@ -3,134 +3,154 @@ import Vendor from "../models/vendor.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
+import Order from "../models/Order.js";
+import Group from "../models/group.js";
 
 const updateVendorProfile = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const updateData = req.body;
-  
-  if (req.user.role !== "vendor") {
-    return sendResponse(
-      res,
-      false,
-      null,
-      "Only vendors can update vendor profiles",
-      statusType.FORBIDDEN
-    );
-  }
+    const userId = req.user._id; // Use _id to be consistent with getVendorProfile
+    const updateData = req.body;
 
-  // Try to find existing vendor
-  let vendor = await Vendor.findOne({ userId });
-
-  // If vendor doesn't exist, create a new one
-  if (!vendor) {
-    try {
-      // Create new vendor profile with the provided data
-      vendor = new Vendor({
-        userId,
-        ...updateData
-      });
-      
-      // Set default business name if not provided
-      if (!vendor.businessName) {
-        vendor.businessName = `${req.user.name}'s Business`;
-      }
-      
-      // Save the new vendor
-      const newVendor = await vendor.save();
-      
-      return sendResponse(
-        res,
-        true,
-        newVendor,
-        "Vendor profile created successfully",
-        statusType.CREATED
-      );
-    } catch (error) {
-      // Handle creation errors
-      let errorMessage = "Vendor creation failed";
-      if (error.errors) {
-        const firstError = Object.values(error.errors)[0];
-        errorMessage = firstError.message;
-      } else {
-        errorMessage = error.message;
-      }
-      
-      return sendResponse(
-        res,
-        false,
-        null,
-        errorMessage,
-        statusType.BAD_REQUEST
-      );
+    if (!userId) {
+        return sendResponse(res, false, null, "User ID is missing", statusType.BAD_REQUEST);
     }
-  }
 
-  // Validate operatingLocations primary flag for existing vendors
-  if (updateData.operatingLocations) {
-    const primaryLocations = updateData.operatingLocations.filter(
-      (loc) => loc.primary
-    );
-    if (primaryLocations.length > 1) {
-      return sendResponse(
-        res,
-        false,
-        null,
-        "Only one location can be primary",
-        statusType.BAD_REQUEST
-      );
-    }
-  }
-
-  // Update allowed fields
-  const allowedUpdates = [
-    "businessName",
-    "businessType",
-    "operatingLocations",
-    "operatingHours",
-    "daysOfOperation",
-    "cuisineTypes",
-    "averageDailyCustomers",
-    "monthlyRevenue",
-    "preferredDeliveryTime",
-    "canOrderSupply",
-    "paymentMethods",
-    "verificationDocuments",
-  ];
-
-  // Apply updates
-  allowedUpdates.forEach((field) => {
-    if (updateData[field] !== undefined) {
-      vendor[field] = updateData[field];
-    }
-  });
-
-  try {
-    const updatedVendor = await vendor.save();
-    return sendResponse(
-      res,
-      true,
-      updatedVendor,
-      "Vendor profile updated successfully",
-      statusType.SUCCESS
-    );
-  } catch (error) {
-    // Handle validation errors
-    let errorMessage = "Validation failed";
-    if (error.errors) {
-      const firstError = Object.values(error.errors)[0];
-      errorMessage = firstError.message;
-    } else {
-      errorMessage = error.message;
-    }
+    // Find vendor or create new
+    let vendor = await Vendor.findOne({ userId });
+    const isNew = !vendor;
     
-    return sendResponse(
-      res,
-      false,
-      null,
-      errorMessage,
-      statusType.BAD_REQUEST
-    );
-  }
+    if (isNew) {
+        vendor = new Vendor({ userId });
+    }
+
+    // Update fields with validation
+    const validFields = [
+        'businessName', 'businessType', 'operatingHours', 'daysOfOperation',
+        'cuisineTypes', 'paymentMethods', 'preferredDeliveryTime',
+        'canOrderSupply', 'operatingLocations'
+    ];
+    
+    validFields.forEach(key => {
+        if (updateData[key] !== undefined) {
+            vendor[key] = updateData[key];
+        }
+    });
+
+    // Validate and normalize operatingLocations
+    if (Array.isArray(vendor.operatingLocations)) {
+        vendor.operatingLocations = vendor.operatingLocations.map(loc => ({
+            name: loc.name || "Unnamed Location",
+            address: loc.address || "",
+            primary: loc.primary || false
+        }));
+        
+        // Ensure at least one primary location
+        if (vendor.operatingLocations.length > 0 && 
+            !vendor.operatingLocations.some(loc => loc.primary)) {
+            vendor.operatingLocations[0].primary = true;
+        }
+    } else {
+        vendor.operatingLocations = [{
+            name: "Main Location",
+            address: "",
+            primary: true
+        }];
+    }
+
+    try {
+        await vendor.save();
+        return sendResponse(
+            res,
+            true,
+            vendor,
+            isNew ? "Vendor profile created" : "Vendor profile updated",
+            statusType.SUCCESS
+        );
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return sendResponse(res, false, null, messages.join(', '), statusType.BAD_REQUEST);
+        }
+        throw error;
+    }
 });
 
-export { updateVendorProfile };
+const getVendorProfile = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+
+    try {
+        let vendor = await Vendor.findOne({ userId })
+            .populate({
+                path: 'orderHistory',
+                model: Order,
+                select: '-items -__v'
+            })
+            .populate({
+                path: 'groupIds',
+                model: Group,  // Use imported Group model
+                select: 'name description'
+            })
+            .lean();
+
+        // If vendor profile doesn't exist, return a default structure
+        if (!vendor) {
+            const defaultVendorProfile = {
+                businessName: `${req.user.name}'s Business`,
+                businessType: "",
+                operatingHours: { start: "08:00", end: "20:00" },
+                daysOfOperation: ["mon", "tue", "wed", "thu", "fri", "sat"],
+                cuisineTypes: [],
+                paymentMethods: [],
+                preferredDeliveryTime: "09:00",
+                canOrderSupply: true,
+                operatingLocations: [],
+                verified: false,
+                verificationDocuments: []
+            };
+
+            return sendResponse(
+                res,
+                true,
+                {
+                    ...defaultVendorProfile,
+                    user: {
+                        name: req.user.name,
+                        phone: req.user.phone,
+                        email: req.user.email,
+                        avatar: req.user.avatar
+                    }
+                },
+                "Vendor profile not found, returning default structure",
+                statusType.SUCCESS
+            );
+        }
+
+        // If vendor profile exists, return it with user data
+        const vendorProfile = {
+            ...vendor,
+            user: {
+                name: req.user.name,
+                phone: req.user.phone,
+                email: req.user.email,
+                avatar: req.user.avatar
+            }
+        };
+
+        return sendResponse(
+            res,
+            true,
+            vendorProfile,
+            "Vendor profile retrieved successfully",
+            statusType.SUCCESS
+        );
+    } catch (error) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            error.message || "Error retrieving vendor profile",
+            statusType.INTERNAL_SERVER_ERROR
+        );
+    }
+});
+
+export { updateVendorProfile, getVendorProfile };

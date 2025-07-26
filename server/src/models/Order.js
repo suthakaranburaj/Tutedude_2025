@@ -87,5 +87,5 @@ const orderSchema = new mongoose.Schema(
 // Geospatial index for delivery locations
 orderSchema.index({ deliveryLocation: "2dsphere" });
 
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 export default Order;
