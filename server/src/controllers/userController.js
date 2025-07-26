@@ -1,111 +1,137 @@
-import User from "../models/user.js"
-import { asyncHandler } from "../utils/asyncHandler.js"
-import bcrypt from "bcrypt"
+import User from "../models/user.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
 import { validatePhone } from "../helper/common.js";
-import { createToken } from "../helper/common.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+// Token generator functions
+const generateAccessToken = (user) => {
+    return jwt.sign(
+        { user_id: user._id, role: user.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+    );
+};
+
+const generateRefreshToken = (user) => {
+    return jwt.sign(
+        {
+            user_id: user._id,
+            role: user.role,
+            token_version: user.token_version || 0,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "7d" }
+    );
+};
+
+const cookieOptions = {
+    httpOnly: false,
+    secure: true,
+    sameSite: "Strict",
+};
+
+// ✅ Register User
 const registerUser = asyncHandler(async (req, res) => {
     const { name, phone, pin, role } = req.body;
-
+    // console.log("fweo",req.body);
     if (!name || !phone || !pin || !role) {
-        return sendResponse(
-            res,
-            false,
-            null,
-            "Fields cannot be empty",
-            statusType.BAD_REQUEST
-        );
+        return sendResponse(res, false, null, "Fields cannot be empty", statusType.BAD_REQUEST);
+    }
+    let image = null;
+    if (req.files && req.files.image) {
+        const avatarLocalPath = req.files.image[0].path;
+        const image_temp = await uploadOnCloudinary(avatarLocalPath, { secure: true });
+        image = image_temp?.secure_url;
     }
 
-    // Check if user already exists
-    let user = await User.findOne({ phone });
-
-    if (user) {
-        return sendResponse(
-            res,
-            false,
-            null,
-            "User Already Exists, Please Login",
-            statusType.BAD_REQUEST
-        );
-    }
-
-    // Validate phone format
     if (!validatePhone(phone)) {
-        return sendResponse(
-            res,
-            false,
-            null,
-            "Phone number must be a valid phone number",
-            statusType.BAD_REQUEST
-        );
+        return sendResponse(res, false, null, "Invalid phone number", statusType.BAD_REQUEST);
     }
 
-    // Create new user
-    user = new User({ name, phone, pin, role });
+    let user = await User.findOne({ phone });
+    if (user) {
+        return sendResponse(res, false, null, "User already exists, please login", statusType.BAD_REQUEST);
+    }
 
     // Hash PIN
     const salt = await bcrypt.genSalt(10);
-    user.pin = await bcrypt.hash(pin, salt);
+    const hashedPin = await bcrypt.hash(pin, salt);
 
-    // Save to DB
+    // Save User
+    user = await User.create({ name, phone, pin: hashedPin, role, image });
+
+    // Generate Tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // Store refreshToken in DB
+    user.refresh_token = refreshToken;
     await user.save();
 
-    // Generate token
-    const token = createToken(user._id);
-
-    // Prepare response data (exclude PIN)
+    // Prepare response
     const userData = user.toObject();
     delete userData.pin;
+    delete userData.refresh_token;
 
-    return sendResponse(
-        res,
-        true,
-        { ...userData, token },
-        "User Created Successfully",
-        statusType.CREATED
-    );
+    return res
+        .status(201)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json({
+            status: true,
+            success: true,
+            accessToken,
+            message: "User registered successfully",
+            data: userData,
+        });
 });
-
 
 const loginUser = asyncHandler(async (req, res) => {
-  const { phone, pin } = req.body;
+    const { phone, pin } = req.body;
 
-  // Check for empty input
-  if (!phone || !pin) {
-    return sendResponse(res, false, null, "Phone and PIN are required", statusType.BAD_REQUEST);
-  }
+    if (!phone || !pin) {
+        return sendResponse(res, false, null, "Phone and PIN are required", statusType.BAD_REQUEST);
+    }
 
-  // Validate phone number format
-  if (!validatePhone(phone)) {
-    return sendResponse(res, false, null, "Please enter a valid phone number", statusType.BAD_REQUEST);
-  }
+    if (!validatePhone(phone)) {
+        return sendResponse(res, false, null, "Invalid phone number", statusType.BAD_REQUEST);
+    }
 
-  // Find user by phone
-  const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone });
+    if (!user) {
+        return sendResponse(res, false, null, "User does not exist", statusType.BAD_REQUEST);
+    }
 
-  if (!user) {
-    return sendResponse(res, false, null, "User doesn't exist, please create your account", statusType.BAD_REQUEST);
-  }
+    const isMatch = await bcrypt.compare(pin, user.pin);
+    if (!isMatch) {
+        return sendResponse(res, false, null, "Phone or PIN is incorrect", statusType.BAD_REQUEST);
+    }
 
-  // Compare PIN
-  const isValid = await bcrypt.compare(pin, user.pin);
-  if (!isValid) {
-    return sendResponse(res, false, null, "Phone or PIN is incorrect", statusType.BAD_REQUEST);
-  }
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-  // Create token
-  const token = createToken(user._id);
+    user.refresh_token = refreshToken;
+    await user.save();
 
-  // Exclude hashed pin
-  const userData = user.toObject();
-  delete userData.pin;
+    const userData = user.toObject();
+    delete userData.pin;
+    delete userData.refresh_token;
 
-  // Send response
-  return sendResponse(res, true, { ...userData, token }, "Login Successful", statusType.SUCCESS);
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json({
+            status: true,
+            success: true,
+            accessToken,
+            message: "Login successful",
+            data: userData,
+        });
 });
-
 
 export { registerUser, loginUser };
