@@ -10,11 +10,16 @@ import {
   Filter,
   RefreshCw,
 } from "lucide-react";
+import { addInventoryItem } from "@/services/supplier";
 
 export default function SupplierInventory() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ itemName: "", quantity: "", unit: "kg", price: "" });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState("");
 
   // Mock data for demonstration
   const mockInventory = [
@@ -94,6 +99,47 @@ export default function SupplierInventory() {
     return "good";
   };
 
+  const handleAddInputChange = (e) => {
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    setAddLoading(true);
+    setAddError("");
+    try {
+      const payload = {
+        itemName: addForm.itemName,
+        quantity: Number(addForm.quantity),
+        unit: addForm.unit,
+        price: Number(addForm.price),
+      };
+      const res = await addInventoryItem(payload);
+      // Optionally, fetch inventory from backend here. For now, update locally:
+      setInventory((prev) => [
+        {
+          id: Date.now(),
+          name: payload.itemName,
+          category: "-",
+          quantity: payload.quantity,
+          unit: payload.unit,
+          price: payload.price,
+          minStock: 5,
+          supplier: "-",
+          lastUpdated: new Date().toISOString().slice(0, 10),
+        },
+        ...prev,
+      ]);
+      setIsAddModalOpen(false);
+      setAddForm({ itemName: "", quantity: "", unit: "kg", price: "" });
+    } catch (err) {
+      setAddError(err?.error || "Failed to add item");
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -104,6 +150,81 @@ export default function SupplierInventory() {
 
   return (
     <div className="p-4 md:p-8">
+      {/* Add Inventory Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              onClick={() => setIsAddModalOpen(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Add Inventory Item</h2>
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Item Name</label>
+                <input
+                  type="text"
+                  name="itemName"
+                  value={addForm.itemName}
+                  onChange={handleAddInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={addForm.quantity}
+                  onChange={handleAddInputChange}
+                  required
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
+                <select
+                  name="unit"
+                  value={addForm.unit}
+                  onChange={handleAddInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="kg">kg</option>
+                  <option value="L">L</option>
+                  <option value="g">g</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={addForm.price}
+                  onChange={handleAddInputChange}
+                  required
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              {addError && <div className="text-red-500 text-sm">{addError}</div>}
+              <button
+                type="submit"
+                className="w-full py-2 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 disabled:opacity-60"
+                disabled={addLoading}
+              >
+                {addLoading ? "Adding..." : "Add Item"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -206,7 +327,10 @@ export default function SupplierInventory() {
                 <RefreshCw className="w-4 h-4" />
                 Refresh
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <button
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                onClick={() => setIsAddModalOpen(true)}
+              >
                 <PlusCircle className="w-4 h-4" />
                 Add Item
               </button>

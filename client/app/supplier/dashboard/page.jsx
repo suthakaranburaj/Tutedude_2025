@@ -24,6 +24,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Link from "next/link";
 
 export default function SupplierDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -360,7 +361,7 @@ export default function SupplierDashboard() {
                 Quick Actions
               </h2>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                {/* <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-200 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
                   <div className="flex items-center">
                     <PlusCircle className="w-5 h-5 text-blue-600 mr-3" />
                     <span className="font-medium text-gray-900 dark:text-white">
@@ -368,17 +369,19 @@ export default function SupplierDashboard() {
                     </span>
                   </div>
                   <ArrowRight className="w-5 h-5 text-blue-600" />
-                </button>
+                </button> */}
 
-                <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors">
-                  <div className="flex items-center">
-                    <RefreshCw className="w-5 h-5 text-emerald-600 mr-3" />
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      Update Stock
-                    </span>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-emerald-600" />
-                </button>
+                <Link href="/supplier/inventory">
+                  <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border border-emerald-200 dark:border-emerald-800 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors">
+                    <div className="flex items-center">
+                      <RefreshCw className="w-5 h-5 text-emerald-600 mr-3" />
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        Update Stock
+                      </span>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-emerald-600" />
+                  </button>
+                </Link>
 
                 <button className="w-full flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-600 transition-colors">
                   <div className="flex items-center">
