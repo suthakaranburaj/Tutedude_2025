@@ -7,6 +7,7 @@ import {
     getSupplierOrders,
     cancelOrder
 } from "../controllers/orderController.js";
+import { CheckOut, VerifyPayment } from "../controllers/checkoutController.js";
 // import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -27,4 +28,6 @@ router
     .get(getOrderDetails)
     .put(updateOrderStatus);
 
+router.post("/checkout", CheckOut)
+router.post("/verify",VerifyPayment)
 export default router;

@@ -55,6 +55,16 @@ export const getAllSupplier = async () => {
 }
 
 export const createOrder = async (payload) => {
-  const response = await apiClient.post("/order",payload);
+  const response = await apiClient.post("/order", payload);
+  return response.data;
+}
+
+export const Checkout = async (payload) => {
+  const response = await apiClient.post("/order/checkout",payload);
+  return response.data;
+}
+
+export const Verify = async (payload) => {
+  const response = await apiClient.post("/order/verify",payload);
   return response.data;
 }
