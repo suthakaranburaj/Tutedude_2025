@@ -13,7 +13,7 @@ import {
     Building,
     X,
 } from "lucide-react";
-import { getAllSupplier } from "@/services/supplier";
+import { createOrder, getAllSupplier } from "@/services/supplier";
 
 export default function SupplierList() {
     const [suppliers, setSuppliers] = useState([]);
@@ -198,29 +198,22 @@ export default function SupplierList() {
             };
 
             // In a real app, you would call your API endpoint here
-            console.log("Order data to be submitted:", orderData);
+            // console.log("Order data to be submitted:", orderData);
 
             // Simulate API call
-            showNotification("Order created successfully!");
-            setCart([]);
+            // showNotification("Order created successfully!");
+            // setCart([]);
 
             // For demo purposes, we're just logging to console
             // In production, you would do:
-            // const response = await fetch('/api/order', {
-            //   method: 'POST',
-            //   headers: {
-            //     'Content-Type': 'application/json',
-            //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-            //   },
-            //   body: JSON.stringify(orderData)
-            // });
-            // const result = await response.json();
-            // if (response.ok) {
-            //   showNotification("Order created successfully!");
-            //   setCart([]);
-            // } else {
-            //   showNotification(result.message || "Failed to create order");
-            // }
+            const response = await createOrder(cart);
+            const result = await response.json();
+            if (response.ok) {
+              showNotification("Order created successfully!");
+              setCart([]);
+            } else {
+              showNotification(result.message || "Failed to create order");
+            }
         } catch (error) {
             showNotification("An error occurred while creating the order");
             console.error("Checkout error:", error);

@@ -4,7 +4,7 @@ import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
 import InventoryDetail from "../models/inventorydetails.js";
 import InventoryItem from "../models/inventoryItem.js";
-import Order from "../models/order.js";
+import Order from "../models/Order.js";
 // Create or update supplier profile
 export const createOrUpdateSupplierProfile = asyncHandler(async (req, res) => {
     const userId = req.user._id;

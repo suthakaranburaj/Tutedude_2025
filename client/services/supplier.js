@@ -53,3 +53,8 @@ export const getAllSupplier = async () => {
 
   return response.data;
 }
+
+export const createOrder = async () => {
+  const response = await apiClient.post("/order");
+  return response.data;
+}
