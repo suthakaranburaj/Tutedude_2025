@@ -38,7 +38,7 @@ const base_url = process.env.NEXT_PUBLIC_API_BASE_URL;
 // Get Authorization Header from localStorage
 const getAuthHeader = () => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("Token");
+    const token = JSON.parse(localStorage.getItem("Token"));
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
   return {};
