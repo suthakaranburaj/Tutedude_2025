@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { ArrowLeft, Send, MessageCircle, Star, MapPin, Clock, CheckCircle, Image, X } from 'lucide-react'
 import { addFeedback, getAllVendors, checkUserFeedback } from '@/services/userServices'
 
@@ -21,18 +21,18 @@ export default function FeedbackPage() {
   const [existingFeedback, setExistingFeedback] = useState(null)
 
   const router = useRouter()
-  const searchParams = useSearchParams()
 
 
   useEffect(() => {
-    const vendorId = searchParams.get("vendorId");
+    const params = new URLSearchParams(window.location.search);
+    const vendorId = params.get("vendorId");
     if (vendorId) {
       fetchVendorDetails(vendorId);
     } else {
       fetchVendors();
       setShowVendorSelect(true);
     }
-  }, [searchParams]);
+  }, []);
 
 
   const fetchVendorDetails = async () => {
