@@ -63,4 +63,26 @@ const supplierCheck = (req, res, next) => {
     }
     next();
 };
-export { verifyJWT, supplierCheck };
+
+// middlewares/auth.middleware.js
+export const normalUserCheck = (req, res, next) => {
+    if (req.user.role !== 'normal_user') {
+        return res.status(403).json({ 
+            success: false, 
+            message: "Access denied. Requires normal user role" 
+        });
+    }
+    next();
+};
+
+
+const agentCheck = (req, res, next) => {
+    if (req.user.role !== "agent") {
+        return res.status(403).json({
+            success: false,
+            message: "Access denied. agent role required"
+        });
+    }
+    next();
+};
+export { verifyJWT, supplierCheck,agentCheck };

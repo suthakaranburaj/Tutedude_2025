@@ -7,7 +7,8 @@ import {
     getSupplierDashboard,
     getInventory,
     updateDeliveryRadius,
-    getOrderHistory
+    getOrderHistory,
+    getSupplierProfile
 } from "../controllers/supplierController.js";
 import { supplierCheck } from "../middlewares/auth.middleware.js";
 
@@ -23,5 +24,6 @@ router.get("/dashboard", getSupplierDashboard);
 router.get("/inventory", getInventory);
 router.put("/delivery-radius", updateDeliveryRadius);
 router.get("/orders", getOrderHistory);
+router.get("/profile", getSupplierProfile);
 
 export default router;

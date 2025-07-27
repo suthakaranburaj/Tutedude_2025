@@ -28,14 +28,14 @@ const handleRequest = async (axiosCall) => {
     };
   }
 };
-const base_url = "http://localhost:3000/api"
+const base_url = "http://localhost:8003/api"
 
 export const apiClient = {
   get: async (url, headers = {}) =>
     handleRequest(() =>
       axios.get(`${base_url}${url}`, {
         ...headers,
-        withCredentials: true
+        withCredentials: true,
       })
     ),
 
@@ -49,7 +49,22 @@ export const apiClient = {
     return handleRequest(() =>
       axios.post(`${base_url}${url}`, data, {
         ...headers,
-        withCredentials: true
+        withCredentials: true,
+      })
+    );
+  },
+
+  put: async (url, data, headers = {}) => {
+    if (data instanceof FormData) {
+      delete headers["Content-Type"];
+    } else if (!headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    return handleRequest(() =>
+      axios.put(`${base_url}${url}`, data, {
+        ...headers,
+        withCredentials: true,
       })
     );
   },
@@ -58,9 +73,9 @@ export const apiClient = {
     handleRequest(() =>
       axios.delete(`${base_url}${url}`, {
         ...headers,
-        withCredentials: true
+        withCredentials: true,
       })
-    )
+    ),
 };
 
 

@@ -1,13 +1,7 @@
 // models/supplier.js
 import mongoose from "mongoose";
+import { inventoryItemSchema } from "./inventoryItem.js";
 
-const inventoryItemSchema = new mongoose.Schema({
-    itemName: { type: String, required: true },
-    quantity: { type: Number, required: true, min: 0 },
-    unit: { type: String, required: true, enum: ["kg", "g", "lb", "pieces", "liters"] },
-    price: { type: Number, required: true, min: 0 },
-    lastUpdated: { type: Date, default: Date.now }
-});
 
 const supplierSchema = new mongoose.Schema(
     {
@@ -17,7 +11,51 @@ const supplierSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
-        inventory: [inventoryItemSchema],
+        // New fields to match frontend
+        companyName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        businessAddress: {
+            type: String,
+            required: true
+        },
+        gstNumber: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        panNumber: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        businessType: {
+            type: String,
+            enum: ["Proprietorship", "Partnership", "Private Limited", "LLP", "Other"],
+            default: "Proprietorship"
+        },
+        registrationDate: {
+            type: Date,
+            required: true
+        },
+        documents: [
+            {
+                name: String,
+                status: {
+                    type: String,
+                    enum: ["pending", "verified", "rejected"],
+                    default: "pending"
+                },
+                uploaded: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+        // Existing fields
+        inventory: [{ type: mongoose.Schema.Types.ObjectId, ref: "InventoryItem" }],
         pricePredictionModel: String,
         dashboardStats: {
             totalItems: { type: Number, default: 0 },

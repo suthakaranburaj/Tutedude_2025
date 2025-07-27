@@ -37,6 +37,8 @@ const cookieOptions = {
 // ✅ Register User
 const registerUser = asyncHandler(async (req, res) => {
     const { name, phone, pin, role } = req.body;
+        console.log("some");
+
     // console.log("fweo",req.body);
     if (!name || !phone || !pin || !role) {
         return sendResponse(res, false, null, "Fields cannot be empty", statusType.BAD_REQUEST);
@@ -97,9 +99,9 @@ const loginUser = asyncHandler(async (req, res) => {
         return sendResponse(res, false, null, "Phone and PIN are required", statusType.BAD_REQUEST);
     }
 
-    if (!validatePhone(phone)) {
-        return sendResponse(res, false, null, "Invalid phone number", statusType.BAD_REQUEST);
-    }
+    // if (!validatePhone(phone)) {
+    //     return sendResponse(res, false, null, "Invalid phone number", statusType.BAD_REQUEST);
+    // }
 
     const user = await User.findOne({ phone });
     if (!user) {
