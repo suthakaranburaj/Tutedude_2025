@@ -242,3 +242,101 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
 
     return sendResponse(res, true, updatedUser, "Profile updated successfully", statusType.SUCCESS);
 });
+
+// controllers/normalUserController.js
+export const getVendorFeedback = asyncHandler(async (req, res) => {
+    const { vendorId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    if (!vendorId) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Vendor ID is required",
+            statusType.BAD_REQUEST
+        );
+    }
+
+    const feedback = await Feedback.find({ vendorId })
+        .skip(skip)
+        .limit(limit)
+        .populate("userId", "name image")
+        .sort({ createdAt: -1 });
+
+    const total = await Feedback.countDocuments({ vendorId });
+
+    return sendResponse(
+        res,
+        true,
+        { feedback, page, pages: Math.ceil(total / limit), total },
+        "Feedback retrieved successfully",
+        statusType.SUCCESS
+    );
+});
+
+export const getUserFeedbackHistory = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const feedback = await Feedback.find({ userId })
+        .skip(skip)
+        .limit(limit)
+        .populate("vendorId", "businessName userId")
+        .populate("vendorId.userId", "name image")
+        .sort({ createdAt: -1 });
+
+    const total = await Feedback.countDocuments({ userId });
+
+    return sendResponse(
+        res,
+        true,
+        { feedback, page, pages: Math.ceil(total / limit), total },
+        "User feedback retrieved successfully",
+        statusType.SUCCESS
+    );
+});
+
+// Get vendor by ID
+export const getVendorById = asyncHandler(async (req, res) => {
+    const { vendorId } = req.params;
+
+    if (!vendorId) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Vendor ID is required",
+            statusType.BAD_REQUEST
+        );
+    }
+
+    const vendor = await Vendor.findById(vendorId)
+        .populate("userId", "name phone image")
+        .lean();
+
+    if (!vendor) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Vendor not found",
+            statusType.NOT_FOUND
+        );
+    }
+
+    // Calculate average rating
+    const ratings = await Rating.find({ vendorId: vendor._id });
+    const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length || 0;
+    vendor.averageRating = avgRating.toFixed(1);
+
+    return sendResponse(
+        res,
+        true,
+        vendor,
+        "Vendor retrieved successfully",
+        statusType.SUCCESS
+    );
+});

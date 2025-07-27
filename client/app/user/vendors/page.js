@@ -244,7 +244,10 @@ export default function VendorsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vendors.map((vendor) => (
-              <div key={vendor._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div 
+                onClick={() => router.push(`/user/vendors/${vendor._id}`)}
+                key={vendor._id} 
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Vendor Image */}
                 <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 flex items-center justify-center">
                   {vendor.userId?.image ? (

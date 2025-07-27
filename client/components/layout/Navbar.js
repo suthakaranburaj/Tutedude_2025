@@ -48,7 +48,7 @@ export function Navbar() {
       case "normal_user":
         return [
           { href: "/user/vendors", label: "Vendors" },
-          { href: "/user/feedback", label: "Feedback" },
+          { href: "/user/feedback/history", label: "Feedback" },
         ];
       case "supplier":
         return [

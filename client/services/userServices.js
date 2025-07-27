@@ -71,3 +71,20 @@ export const updateUserProfile = async (profileData) => {
   
   return apiClient.put('/normalUser/profile', profileData);
 }; 
+
+// Get vendor by ID
+export const getVendorById = async (vendorId) => {
+  return apiClient.get(`/normalUser/vendors/${vendorId}`);
+};
+
+// Get feedback for a vendor
+export const getVendorFeedback = async (vendorId, page = 1, limit = 10) => {
+  return apiClient.get(
+    `/normalUser/vendors/${vendorId}/feedback?page=${page}&limit=${limit}`
+  );
+};
+
+// Get user feedback history
+export const getUserFeedbackHistory = async (page = 1, limit = 10) => {
+  return apiClient.get(`/normalUser/feedback/history?page=${page}&limit=${limit}`);
+};
