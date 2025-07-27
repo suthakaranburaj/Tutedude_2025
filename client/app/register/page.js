@@ -1,103 +1,115 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useAuth } from '@/components/auth/AuthProvider'
-import { Eye, EyeOff, User, Phone, ArrowRight, Sparkles, AlertCircle,Lock } from 'lucide-react'
-import { Navbar } from '@/components/layout/Navbar'
-import { registerUser } from '@/services/authServices' // Import the service
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  Eye,
+  EyeOff,
+  User,
+  Phone,
+  ArrowRight,
+  Sparkles,
+  AlertCircle,
+  Lock,
+} from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { registerUser } from "@/services/authServices"; // Import the service
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    pin: '',
-    confirmPassword: '',
-    role: 'agent', // Default role
-    image: null
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+    name: "",
+    phone: "",
+    pin: "",
+    confirmPassword: "",
+    role: "agent", // Default role
+    image: null,
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-    if (error) setError('')
-  }
+      [e.target.name]: e.target.value,
+    });
+    if (error) setError("");
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFormData({
         ...formData,
-        image: e.target.files[0]
-      })
+        image: e.target.files[0],
+      });
     }
-  }
+  };
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      setError('Name is required')
-      return false
+      setError("Name is required");
+      return false;
     }
     if (!formData.phone.trim()) {
-      setError('Phone Number is required')
-      return false
+      setError("Phone Number is required");
+      return false;
     }
     // if (!/^\d{13}$/.test(formData.phone)) {
     //   setError('Please enter a valid 13-digit phone number')
     //   return false
     // }
     if (formData.pin.length < 4) {
-      setError('PIN must be at least 4 characters long')
-      return false
+      setError("PIN must be at least 4 characters long");
+      return false;
     }
     if (formData.pin !== formData.confirmPassword) {
-      setError('PINs do not match')
-      return false
+      setError("PINs do not match");
+      return false;
     }
     if (!formData.role) {
-      setError('Role is required')
-      return false
+      setError("Role is required");
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
+    e.preventDefault();
 
-    setIsLoading(true)
-    setError('')
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setError("");
 
     try {
       // Call the service function
-      
-      const response = await registerUser(formData)
 
-      console.log('Registration Response:', response);
-      
-      
+      const response = await registerUser(formData);
+
+      console.log("Registration Response:", response);
+
       // Handle response
       if (response.data.data) {
         // Store tokens if needed
-        localStorage.setItem('User', JSON.stringify(response))
-        router.push('/')
+        localStorage.setItem("User", JSON.stringify(response));
+        localStorage.setItem(
+          "Token",
+          JSON.stringify(response.data.accessToken)
+        );
+        router.push("/");
       } else {
-        setError(response.error || 'Registration failed')
+        setError(response.error || "Registration failed");
       }
     } catch (err) {
-      setError(err.response?.error || 'Registration failed. Please try again.')
+      setError(err.response?.error || "Registration failed. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -124,14 +136,19 @@ export default function RegisterPage() {
             {error && (
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  {error}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Full Name
                 </label>
                 <div className="relative">
@@ -153,7 +170,10 @@ export default function RegisterPage() {
 
               {/* Phone Field */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Phone Number
                 </label>
                 <div className="relative">
@@ -176,7 +196,10 @@ export default function RegisterPage() {
 
               {/* Role Field */}
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Role
                 </label>
                 <div className="relative">
@@ -198,7 +221,10 @@ export default function RegisterPage() {
 
               {/* Image Upload */}
               <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="image"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Profile Image (Optional)
                 </label>
                 <input
@@ -221,7 +247,10 @@ export default function RegisterPage() {
 
               {/* PIN Field */}
               <div>
-                <label htmlFor="pin" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="pin"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   PIN
                 </label>
                 <div className="relative">
@@ -231,7 +260,7 @@ export default function RegisterPage() {
                   <input
                     id="pin"
                     name="pin"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.pin}
                     onChange={handleChange}
@@ -244,14 +273,21 @@ export default function RegisterPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               {/* Confirm PIN Field */}
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Confirm PIN
                 </label>
                 <div className="relative">
@@ -261,7 +297,7 @@ export default function RegisterPage() {
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
@@ -274,7 +310,11 @@ export default function RegisterPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -301,7 +341,7 @@ export default function RegisterPage() {
 
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-300">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link
                 href="/login"
                 className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors duration-200"
@@ -313,5 +353,5 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider'
 import { Eye, EyeOff, Phone, Lock, ArrowRight, Sparkles, AlertCircle } from 'lucide-react'
 import { Navbar } from '@/components/layout/Navbar'
 import { loginUser } from '@/services/authServices' // Import the service
+import { RepeatOneSharp } from '@mui/icons-material'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -60,6 +61,10 @@ export default function LoginPage() {
 
       if (response.data != null) {
         localStorage.setItem('User', JSON.stringify(response.data.data))
+        localStorage.setItem(
+          "Token",
+          JSON.stringify(response.data.accessToken)
+        );
         router.push('/')
       } else {
         setError(response.error || 'Login failed')

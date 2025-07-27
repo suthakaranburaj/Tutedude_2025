@@ -1,40 +1,17 @@
-import axios from "axios";
-const asyncHandler = (fn) => {
-  return async (...args) => {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      console.error("Error:", error);
-      throw error; // Rethrow the error if needed
-    }
-  };
+const getAuthHeader = () => {
+  const token =
+    typeof window !== "undefined" && localStorage.getItem("accessToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
-const getCookie = (name) => {
-  const value = `; ${document.cookie}`;
-  // console.log(document.cookie)
-  const parts = value.split(`; ${name}=`);
-  // console.log(parts)
-  if (parts.length === 2) return parts.pop().split(";").shift();
-};
-
-const handleRequest = async (axiosCall) => {
-  try {
-    const response = await axiosCall();
-    return { data: response.data, error: null };
-  } catch (error) {
-    return {
-      data: null,
-      error: error.response?.data?.message || error.message || "Request failed",
-    };
-  }
-};
-const base_url = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const apiClient = {
   get: async (url, headers = {}) =>
     handleRequest(() =>
       axios.get(`${base_url}${url}`, {
-        ...headers,
+        headers: {
+          ...headers,
+          ...getAuthHeader(),
+        },
         withCredentials: true,
       })
     ),
@@ -48,7 +25,10 @@ export const apiClient = {
 
     return handleRequest(() =>
       axios.post(`${base_url}${url}`, data, {
-        ...headers,
+        headers: {
+          ...headers,
+          ...getAuthHeader(),
+        },
         withCredentials: true,
       })
     );
@@ -63,7 +43,10 @@ export const apiClient = {
 
     return handleRequest(() =>
       axios.put(`${base_url}${url}`, data, {
-        ...headers,
+        headers: {
+          ...headers,
+          ...getAuthHeader(),
+        },
         withCredentials: true,
       })
     );
@@ -72,11 +55,11 @@ export const apiClient = {
   delete: async (url, headers = {}) =>
     handleRequest(() =>
       axios.delete(`${base_url}${url}`, {
-        ...headers,
+        headers: {
+          ...headers,
+          ...getAuthHeader(),
+        },
         withCredentials: true,
       })
     ),
 };
-
-
-export { asyncHandler, getCookie };

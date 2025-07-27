@@ -83,7 +83,7 @@ export function Navbar() {
   const roleLinks = getRoleLinks();
   const profileUrl = getProfileUrl();
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("Token");
     localStorage.removeItem("User");
     setUser(null);
     router.push('/login');
