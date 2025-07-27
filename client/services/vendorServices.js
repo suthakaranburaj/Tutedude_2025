@@ -1,6 +1,13 @@
 import axios from 'axios';
-
+import { apiClient } from "@/helper/commonHelper";
 const API_BASE_URL = 'http://localhost:8003/api';
+
+
+export const getVendorDashboard = async () => {
+  const response = await apiClient.get("/vendor/getDashboard");
+  return response.data;
+};
+
 
 export const getVendorProfile = async () => {
   try {

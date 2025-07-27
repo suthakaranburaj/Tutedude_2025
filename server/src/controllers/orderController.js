@@ -1,4 +1,4 @@
-import Order from "../models/order.js";
+import Order from "../models/Order.js";
 import Vendor from "../models/vendor.js";
 import Supplier from "../models/supplier.js";
 import InventoryItem from "../models/inventoryItem.js";
@@ -30,10 +30,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
 
     // Check vendor status
-    // console.log("User ID:", userId);
-    // console.log("Supplier ID:", supplierId);
     const vendor = await Vendor.findOne({ userId: userId });
-    // console.log("Vendor:", vendor);
     if (!vendor || !vendor.canOrderSupply) {
         return sendResponse(
             res,
@@ -44,13 +41,30 @@ export const createOrder = asyncHandler(async (req, res) => {
         );
     }
 
-    // Calculate total and validate items
+    // Calculate total and validate items - KEY FIX: POPULATE INVENTORY
     let totalAmount = 0;
     const orderItems = [];
-    const supplier = await Supplier.findOne({ userId: supplierId });
-    console.log("Supplier:", supplier);
+    
+    // Populate inventory items
+    const supplier = await Supplier.findOne({ userId: supplierId })
+        .populate('inventory');  // Add this population
+    
+    if (!supplier) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Supplier not found",
+            statusType.NOT_FOUND
+        );
+    }
+
     for (const item of items) {
-        const inventoryItem = supplier.inventory.find((i) => i._id.toString() === item.itemId);
+        // Find populated inventory item
+        const inventoryItem = supplier.inventory.find(
+            (invItem) => invItem._id.toString() === item.itemId
+        );
+        
         if (!inventoryItem) {
             return sendResponse(
                 res,
@@ -101,9 +115,9 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // Update Vendor order history
+    // Update Vendor order history - FIXED FILTER (userId → user)
     await Vendor.findOneAndUpdate(
-        { user: userId },
+        { userId: userId },  // Changed from { user: userId }
         {
             $push: {
                 orderHistory: savedOrder._id,
@@ -121,13 +135,11 @@ export const createOrder = asyncHandler(async (req, res) => {
         $push: { orderHistory: savedOrder._id }
     });
 
-    // Update inventory quantities inside Supplier document
+    // CORRECT Inventory Update - Update InventoryItem documents
     for (const item of items) {
-        await Supplier.updateOne(
-            { userId: supplierId, "inventory._id": item.itemId },
-            {
-                $inc: { "inventory.$.quantity": -item.quantity }
-            }
+        await InventoryItem.findByIdAndUpdate(
+            item.itemId,
+            { $inc: { quantity: -item.quantity } }
         );
     }
 

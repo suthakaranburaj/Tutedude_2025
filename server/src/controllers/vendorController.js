@@ -153,4 +153,43 @@ const getVendorProfile = asyncHandler(async (req, res) => {
     }
 });
 
-export { updateVendorProfile, getVendorProfile };
+const getVendorDashboard = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    console.log("hello")
+    // Find vendor and populate necessary fields
+    const vendor = await Vendor.findOne({ userId })
+        .select('businessName businessType verified cuisineTypes paymentMethods operatingHours daysOfOperation preferredDeliveryTime operatingLocations averageDailyCustomers monthlyRevenue')
+        .lean();
+
+    if (!vendor) {
+        return sendResponse(res, false, null, "Vendor not found", statusType.NOT_FOUND);
+    }
+
+    // Get order statistics
+    const totalOrders = await Order.countDocuments({ vendor: vendor._id });
+    const pendingOrders = await Order.countDocuments({ 
+        vendor: vendor._id,
+        status: { $in: ["pending", "accepted", "packed", "shipped"] } 
+    });
+
+    // Prepare dashboard data
+    const dashboardData = {
+        totalOrders,
+        pendingOrders,
+        dailyCustomers: vendor.averageDailyCustomers || 0,
+        monthlyRevenue: vendor.monthlyRevenue || 0,
+        businessName: vendor.businessName,
+        businessType: vendor.businessType,
+        verified: vendor.verified,
+        cuisineTypes: vendor.cuisineTypes || [],
+        paymentMethods: vendor.paymentMethods || [],
+        operatingHours: vendor.operatingHours,
+        daysOfOperation: vendor.daysOfOperation || [],
+        preferredDeliveryTime: vendor.preferredDeliveryTime,
+        operatingLocations: vendor.operatingLocations || []
+    };
+
+    return sendResponse(res, true, dashboardData, "Dashboard data retrieved", statusType.SUCCESS);
+});
+
+export { updateVendorProfile, getVendorProfile,getVendorDashboard };
