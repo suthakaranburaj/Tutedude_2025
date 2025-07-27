@@ -1,4 +1,4 @@
-import Order from "../models/order.js";
+import Order from "../models/Order.js";
 import Vendor from "../models/vendor.js";
 import Supplier from "../models/supplier.js";
 import InventoryItem from "../models/inventoryItem.js";
@@ -17,6 +17,8 @@ export const createOrder = asyncHandler(async (req, res) => {
         paymentMethod,
         specialInstructions
     } = req.body;
+
+    paymentMethod = "upi";
 
     // Validate input
     if (!supplierId || !items || items.length === 0 || !deliveryLocation || !paymentMethod) {

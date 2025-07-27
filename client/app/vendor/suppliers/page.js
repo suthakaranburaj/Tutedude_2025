@@ -22,8 +22,31 @@ export default function SupplierList() {
     const [view, setView] = useState("list");
     const [cart, setCart] = useState([]);
     const [notification, setNotification] = useState(null);
+    const [deliveryLocation, setDeliveryLocation] = useState({
+        address: "",
+        lat: null,
+        lng: null,
+    });
+    const [specialInstructions, setSpecialInstructions] = useState("");
 
     useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setDeliveryLocation((prev) => ({
+                        ...prev,
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    }));
+                },
+                (error) => {
+                    console.error("Error getting location:", error);
+                }
+            );
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+
         const fetchSuppliers = async () => {
             try {
                 const response = await getAllSupplier();
@@ -142,6 +165,65 @@ export default function SupplierList() {
             return isNaN(date.getTime()) ? "N/A" : date.toLocaleString();
         } catch {
             return "N/A";
+        }
+    };
+
+    const checkOut = async () => {
+        // Validate delivery location
+        if (!deliveryLocation.address || !deliveryLocation.lat || !deliveryLocation.lng) {
+            showNotification("Please enter complete delivery location information");
+            return;
+        }
+
+        try {
+            const orderData = {
+                supplierId: selectedSupplier._id,
+                items: cart.map(item => ({
+                    itemId: item.itemId,
+                    quantity: item.quantity,
+                    price: item.price,
+                    name: item.name,
+                    unit: item.unit,
+                    supplierId: item.supplierId,
+                    supplierName: item.supplierName
+                })),
+                deliveryLocation: {
+                    lat: deliveryLocation.lat,
+                    lng: deliveryLocation.lng,
+                    address: deliveryLocation.address
+                },
+                preferredDeliveryTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Default: 24h from now
+                paymentMethod: "upi",
+                specialInstructions: specialInstructions || ""
+            };
+
+            // In a real app, you would call your API endpoint here
+            console.log("Order data to be submitted:", orderData);
+
+            // Simulate API call
+            showNotification("Order created successfully!");
+            setCart([]);
+
+            // For demo purposes, we're just logging to console
+            // In production, you would do:
+            // const response = await fetch('/api/order', {
+            //   method: 'POST',
+            //   headers: {
+            //     'Content-Type': 'application/json',
+            //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+            //   },
+            //   body: JSON.stringify(orderData)
+            // });
+            // const result = await response.json();
+            // if (response.ok) {
+            //   showNotification("Order created successfully!");
+            //   setCart([]);
+            // } else {
+            //   showNotification(result.message || "Failed to create order");
+            // }
+        } catch (error) {
+            showNotification("An error occurred while creating the order");
+            console.error("Checkout error:", error);
         }
     };
 
@@ -331,6 +413,41 @@ export default function SupplierList() {
                                         </div>
                                     ))}
                                 </div>
+
+                                {/* Delivery Information Form */}
+                                <div className="mt-6 space-y-4">
+                                    <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                                        Delivery Information
+                                    </h4>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Delivery Address
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600"
+                                            placeholder="Enter full delivery address"
+                                            value={deliveryLocation.address}
+                                            onChange={(e) => setDeliveryLocation({
+                                                ...deliveryLocation,
+                                                address: e.target.value
+                                            })}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Special Instructions
+                                        </label>
+                                        <textarea
+                                            className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600"
+                                            placeholder="Any special instructions..."
+                                            value={specialInstructions}
+                                            onChange={(e) => setSpecialInstructions(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="mt-6 flex justify-between items-center">
                                     <div>
                                         <p className="text-gray-600 dark:text-gray-400">Total Items</p>
@@ -344,7 +461,10 @@ export default function SupplierList() {
                                             ₹{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
                                         </p>
                                     </div>
-                                    <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                    <button
+                                        onClick={checkOut}
+                                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                    >
                                         <Check className="w-5 h-5" />
                                         Proceed to Checkout
                                     </button>
