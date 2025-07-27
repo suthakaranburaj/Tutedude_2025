@@ -1,6 +1,6 @@
 // controllers/userController.js
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { sendResponse } from "../utils/apiResponse.js";
+import {sendResponse} from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
 import User from "../models/user.js";
 import Vendor from "../models/vendor.js";
