@@ -22,9 +22,10 @@ export default function FeedbackPage() {
 
   const router = useRouter()
   const searchParams = useSearchParams()
-  const vendorId = searchParams.get('vendorId')
+
 
   useEffect(() => {
+    const vendorId = searchParams.get("vendorId")
     if (vendorId) {
       fetchVendorDetails()
     } else {
