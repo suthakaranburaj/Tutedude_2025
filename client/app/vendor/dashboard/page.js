@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { MapPin, Clock, CalendarDays, Utensils, Truck, Store, ShoppingCart, ShieldCheck, CreditCard, Box, User } from 'lucide-react'
 import { getVendorDashboard } from "@/services/vendorServices";
+import { Toaster, toast } from "react-hot-toast";
 export default function Dashboard() {
   const router = useRouter()
   
