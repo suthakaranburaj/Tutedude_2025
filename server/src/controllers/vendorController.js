@@ -26,7 +26,7 @@ const updateVendorProfile = asyncHandler(async (req, res) => {
     const validFields = [
         'businessName', 'businessType', 'operatingHours', 'daysOfOperation',
         'cuisineTypes', 'paymentMethods', 'preferredDeliveryTime',
-        'canOrderSupply', 'operatingLocations'
+        'canOrderSupply', 'operatingLocations','averageDailyCustomers','monthlyRevenue'
     ];
     
     validFields.forEach(key => {
