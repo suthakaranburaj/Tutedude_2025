@@ -14,7 +14,7 @@ const app = express();
 app.use(cors({
     origin: [
         "http://localhost:3000",
-        "https://tutedude-2025.vercel.app/"
+        "https://tutedude-2025.vercel.app"
     ],
     credentials: true
 }));
