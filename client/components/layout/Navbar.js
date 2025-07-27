@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Menu, X, User, LogOut, Sparkles } from "lucide-react";
+import { useRouter } from 'next/navigation'
 
 export function Navbar() {
   // const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,6 +86,7 @@ export function Navbar() {
     localStorage.removeItem("token");
     localStorage.removeItem("User");
     setUser(null);
+    router.push('/login');
     // Optionally redirect to login page
     // window.location.href = "/login";
   };

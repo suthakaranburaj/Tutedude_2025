@@ -27,14 +27,10 @@ const vendorSchema = new mongoose.Schema(
         businessType: {
             type: String,
             enum: ["cart", "stall", "food_truck", "small_shop"],
-        
+            default: "cart"
         },
         operatingLocations: [{
             name: String,
-            coordinates: {
-                lat: Number,
-                lng: Number
-            },
             address: String,
             primary: Boolean
         }],
