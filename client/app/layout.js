@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "StreetConnect – Empowering Street Food Ecosystems",
+  title: "Supply Connect – Empowering Street Food Ecosystems",
   description:
     "A digital platform fostering transparency and trust between street food vendors, suppliers, and users. Empowering local businesses to connect, source, and grow together.",
 };
