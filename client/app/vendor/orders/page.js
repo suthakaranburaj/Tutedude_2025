@@ -13,7 +13,7 @@ import {
   Search,
   RefreshCw,
 } from "lucide-react";
-import { getSupplierOrders } from "@/services/order";
+import { getVendorOrders } from "@/services/order";
 
 export default function SupplierOrders() {
   const [orders, setOrders] = useState([]);
@@ -34,11 +34,11 @@ export default function SupplierOrders() {
         ...(statusFilter !== "all" && { status: statusFilter })
       };
       
-      const response = await getSupplierOrders(queryParams);
+      const response = await getVendorOrders(queryParams);
       
-      setOrders(response.orders || []);
-      setTotalOrders(response.total || 0);
-      setTotalPages(response.pages || 1);
+      setOrders(response.data.orders || []);
+      setTotalOrders(response.data.total || 0);
+      setTotalPages(response.data.pages || 1);
     } catch (error) {
       console.error("Error fetching orders:", error);
       setOrders([]);
