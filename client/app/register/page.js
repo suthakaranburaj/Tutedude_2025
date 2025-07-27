@@ -95,7 +95,7 @@ export default function RegisterPage() {
       // Handle response
       if (response.data.data) {
         // Store tokens if needed
-        localStorage.setItem("User", JSON.stringify(response));
+        localStorage.setItem("User", JSON.stringify(response.data.data));
         localStorage.setItem(
           "Token",
           JSON.stringify(response.data.accessToken)
