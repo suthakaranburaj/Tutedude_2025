@@ -544,11 +544,14 @@ export default function SupplierOrders() {
                   onChange={(e) => setNewStatus(e.target.value)}
                   className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="">Select Status</option>
+                  <option value="packed">Packed</option>//
+                  <option value="shipped">Shipped</option>//
+                  <option value="delivered">Delivered</option>//
+                  <option value="cancelled">Cancelled</option>//
+                  <option value="rejected">Rejected</option>//
+                  <option value="pending">Pending</option>//
+                  <option value="accepted">Accepted</option>//
                 </select>
               </div>
 
