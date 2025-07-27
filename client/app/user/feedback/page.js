@@ -22,10 +22,10 @@ export default function FeedbackPage() {
 
   const router = useRouter()
 
-
+  let vendorId = null
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const vendorId = params.get("vendorId");
+    vendorId = params.get("vendorId");
     if (vendorId) {
       fetchVendorDetails(vendorId);
     } else {
