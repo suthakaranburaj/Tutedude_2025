@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { X, Image, Star, AlertCircle, CheckCircle } from 'lucide-react';
 import { apiClient } from '@/helper/commonHelper';
 import {verifyInventoryItem} from "@/services/agent";
-
+import { useEffect } from 'react';
 export default function VerificationDialog({ 
   isOpen, 
   onClose, 
@@ -19,6 +19,21 @@ export default function VerificationDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+
+    useEffect(() => {
+      if (isOpen) {
+        // Clean up existing preview URLs
+        previewUrls.forEach((url) => URL.revokeObjectURL(url));
+
+        // Reset form state
+        setVerificationStatus("verified");
+        setQualityRating(3);
+        setProductReview("");
+        setFiles([]);
+        setPreviewUrls([]);
+        setError("");
+      }
+    }, [isOpen]);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);

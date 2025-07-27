@@ -41,6 +41,8 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
       );
     }
 
+    user._id=user._id.toString();
+
     req.user = user;
     next();
   } catch (error) {

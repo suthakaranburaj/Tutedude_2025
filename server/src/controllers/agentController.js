@@ -5,7 +5,6 @@ import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
-
 export const verifyInventoryItem = asyncHandler(async (req, res) => {
     const { productId, verificationStatus, qualityRating, productReview } = req.body;
 
@@ -14,149 +13,135 @@ export const verifyInventoryItem = asyncHandler(async (req, res) => {
             res,
             false,
             null,
-            "All parameters of product feedback are required",
+            "Verification status, quality rating, and product ID are required",
             statusType.BAD_REQUEST
         );
     }
-    if(req.files.images.length === 0){
+
+    // Check if files exist
+    if (!req.files || !req.files.images || req.files.images.length === 0) {
         return sendResponse(
             res,
             false,
             null,
-            "All parameters of product feedback are required",
+            "At least one image is required",
             statusType.BAD_REQUEST
         );
     }
 
     let imageUrlArray = [];
 
-    if (req.files && req.files.images && Array.isArray(req.files.images)) {
-        for (const file of req.files.images) {
-            const uploadResult = await uploadOnCloudinary(file.path);
-            if (uploadResult?.secure_url) {
-                imageUrlArray.push(uploadResult.secure_url);
-            }
+    // Process each image file
+    for (const file of req.files.images) {
+        const uploadResult = await uploadOnCloudinary(file.path);
+        if (uploadResult?.secure_url) {
+            imageUrlArray.push(uploadResult.secure_url);
         }
     }
 
-
-    const newItem = {
+    // Create inventory detail document
+    const product = await InventoryDetail.create({
+        productId,
         verificationStatus,
         qualityRating,
-        imageUrl:imageUrlArray,
-        productReview
-    };
-
-    const product = await InventoryDetail.create({
-        productId: productId,
-        ...newItem
+        imageUrl: imageUrlArray,
+        productReview: productReview || ""
     });
-
 
     return sendResponse(
         res,
         true,
         product,
-        "Product feedback added successfully",
+        "Product verification submitted successfully",
         statusType.CREATED
     );
 });
 
-// Get all inventory items from all suppliers
 export const getAllInventoryItems = asyncHandler(async (req, res) => {
     try {
-        // Aggregate all inventory items with supplier information and approval status
         const result = await Supplier.aggregate([
-            // Unwind the inventory array to treat each item as a separate document
-            { $unwind: "$inventory" },
-            
-            // Lookup supplier details
+            // Lookup inventory items
             {
                 $lookup: {
-                    from: "users", // Collection name for users
+                    from: "inventoryitems",
+                    localField: "inventory",
+                    foreignField: "_id",
+                    as: "inventoryItems"
+                }
+            },
+            { $unwind: "$inventoryItems" },
+
+            // Lookup user info
+            {
+                $lookup: {
+                    from: "users",
                     localField: "userId",
                     foreignField: "_id",
                     as: "supplierInfo"
                 }
             },
-            
-            // Unwind the supplierInfo array
             { $unwind: "$supplierInfo" },
-            
-            // Lookup approval status from InventoryDetail collection
+
+            // Lookup verification status
             {
                 $lookup: {
-                    from: "inventorydetails", // Collection name for InventoryDetail
-                    let: { inventoryItemId: "$inventory._id" },
+                    from: "inventorydetails",
+                    let: { itemId: "$inventoryItems._id" },
                     pipeline: [
                         {
                             $match: {
-                                $expr: {
-                                    $eq: ["$productId", "$$inventoryItemId"]
-                                }
+                                $expr: { $eq: ["$productId", "$$itemId"] }
                             }
                         },
-                        {
-                            $project: {
-                                _id: 0,
-                                verificationStatus: 1
-                            }
-                        }
+                        { $sort: { _id: -1 } },
+                        { $limit: 1 },
+                        { $project: { verificationStatus: 1 } }
                     ],
                     as: "verification"
                 }
             },
-            
-            // Add field to check verification status
             {
                 $addFields: {
                     verificationStatus: {
-                        $arrayElemAt: ["$verification.verificationStatus", 0]
+                        $ifNull: [{ $arrayElemAt: ["$verification.verificationStatus", 0] }, null]
                     }
                 }
             },
-            
-            // Filter out verified and rejected items
             {
                 $match: {
                     $or: [
-                        { verificationStatus: { $exists: false } }, // No verification record
-                        { verificationStatus: "pending" }, // Only pending status
-                        { verificationStatus: { $nin: ["verified", "rejected"] } } // Other statuses
+                        { verificationStatus: null },
+                        { verificationStatus: "pending" },
+                        { verificationStatus: { $nin: ["verified", "rejected"] } }
                     ]
                 }
             },
-            
-            // Project the desired fields
             {
                 $project: {
-                    _id: "$inventory._id",
-                    itemName: "$inventory.itemName",
-                    quantity: "$inventory.quantity",
-                    unit: "$inventory.unit",
-                    price: "$inventory.price",
-                    lastUpdated: "$inventory.lastUpdated",
+                    _id: "$inventoryItems._id",
+                    itemName: "$inventoryItems.itemName",
+                    quantity: "$inventoryItems.quantity",
+                    unit: "$inventoryItems.unit",
+                    price: "$inventoryItems.price",
+                    lastUpdated: "$inventoryItems.lastUpdated",
                     supplier: {
                         supplierId: "$_id",
                         userId: "$userId",
                         name: "$supplierInfo.name",
                         phone: "$supplierInfo.phone",
-                        deliveryRadius: "$deliveryRadius",
-                        coordinates: "$deliveryRadius.coordinates"
+                        deliveryRadius: "$deliveryRadius"
                     },
                     verificationStatus: 1
                 }
             },
-            
-            // Sort by last updated (newest first)
-            { $sort: { "lastUpdated": -1 } }
+            { $sort: { lastUpdated: -1 } }
         ]);
 
         return sendResponse(
             res,
             true,
             result,
-            "All inventory items retrieved",
+            "Inventory items retrieved successfully",
             statusType.SUCCESS
         );
     } catch (error) {
