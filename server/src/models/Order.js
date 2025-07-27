@@ -1,6 +1,21 @@
 // models/order.js
 import mongoose from "mongoose";
 
+const paymentDetailsSchema = new mongoose.Schema({
+    razorpayOrderId: {
+        type: String,
+        required: true
+    },
+    razorpayPaymentId: String,
+    razorpaySignature: String,
+    status: {
+        type: String,
+        enum: ["created", "captured"],
+        default: "created"
+    },
+    paidAt: Date
+});
+
 const orderItemSchema = new mongoose.Schema({
     itemId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -77,7 +92,8 @@ const orderSchema = new mongoose.Schema(
             enum: ["pending", "completed", "failed"],
             default: "pending"
         },
-        specialInstructions: String
+        specialInstructions: String,
+        paymentDetails: paymentDetailsSchema // Added payment details field
     },
     {
         timestamps: true
@@ -87,5 +103,16 @@ const orderSchema = new mongoose.Schema(
 // Geospatial index for delivery locations
 orderSchema.index({ deliveryLocation: "2dsphere" });
 
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+orderSchema.pre("save", function (next) {
+    if (
+        this.paymentDetails &&
+        this.paymentDetails.razorpayPaymentId &&
+        this.paymentDetails.status === "captured"
+    ) {
+        this.paymentStatus = "completed";
+    }
+    next();
+});
+
+const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 export default Order;

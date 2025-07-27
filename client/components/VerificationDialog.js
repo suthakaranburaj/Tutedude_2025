@@ -77,7 +77,7 @@ export default function VerificationDialog({
       // Make API request
       const response = await verifyInventoryItem(formData);
       
-      if (response.data.success) {
+      if (response.data.status) {
         onVerificationComplete();
         onClose();
       } else {
