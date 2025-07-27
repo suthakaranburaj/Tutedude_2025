@@ -1,6 +1,6 @@
 const getAuthHeader = () => {
   const token =
-    typeof window !== "undefined" && localStorage.getItem("accessToken");
+    typeof window !== "undefined" && localStorage.getItem("Token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
