@@ -587,43 +587,63 @@ export const getSupplierProfile = asyncHandler(async (req, res) => {
 
 // Get all suppliers with verified inventory
 export const getAllSupplier = asyncHandler(async (req, res) => {
-    const allSuppliers = await Supplier.find().lean();
+    try {
+        // Get all suppliers with their inventory references
+        const suppliers = await Supplier.find()
+            .populate({
+                path: 'inventory',
+                model: 'InventoryItem',
+                select: 'itemName quantity unit price lastUpdated'
+            })
+            .lean();
 
-    const processedSuppliers = [];
+        // Process each supplier to include verification status
+        const processedSuppliers = await Promise.all(suppliers.map(async (supplier) => {
+            if (!supplier.inventory || supplier.inventory.length === 0) {
+                return {
+                    ...supplier,
+                    verifiedInventory: []
+                };
+            }
 
-    for (const supplier of allSuppliers) {
-        const inventoryItemIds = supplier.inventory;
+            // Get verification status for each inventory item
+            const verifiedDetails = await InventoryDetail.find({
+                productId: { $in: supplier.inventory.map(item => item._id) },
+                verificationStatus: "verified"
+            }).lean();
 
-        if (!inventoryItemIds || inventoryItemIds.length === 0) {
-            supplier.verifiedInventory = [];
-            processedSuppliers.push(supplier);
-            continue;
-        }
+            const verifiedItemIds = new Set(
+                verifiedDetails.map(detail => detail.productId.toString())
+            );
 
-        // Get verified inventory detail entries
-        const verifiedDetails = await InventoryDetail.find({
-            productId: { $in: inventoryItemIds },
-            verificationStatus: "verified"
-        }).lean();
+            // Filter and mark verified items
+            const verifiedInventory = supplier.inventory.map(item => ({
+                ...item,
+                isVerified: verifiedItemIds.has(item._id.toString())
+            }));
 
-        const verifiedItemIds = verifiedDetails.map((detail) => detail.productId.toString());
+            return {
+                ...supplier,
+                inventory: verifiedInventory,
+                verifiedInventory: verifiedInventory.filter(item => item.isVerified)
+            };
+        }));
 
-        // Filter inventory to only include verified ones
-        const verifiedInventory = await InventoryItem.find({
-            _id: { $in: verifiedItemIds }
-        }).lean();
-
-        // Append only verified inventory
-        supplier.verifiedInventory = verifiedInventory;
-
-        processedSuppliers.push(supplier);
+        sendResponse(
+            res,
+            true,
+            processedSuppliers,
+            "Suppliers with inventory retrieved successfully",
+            statusType.OK
+        );
+    } catch (error) {
+        console.error("Error fetching suppliers:", error);
+        sendResponse(
+            res,
+            false,
+            null,
+            "Failed to retrieve suppliers",
+            statusType.INTERNAL_SERVER_ERROR
+        );
     }
-
-    sendResponse(
-        res,
-        true,
-        processedSuppliers,
-        "Suppliers with verified inventory retrieved successfully",
-        statusType.OK
-    );
 });

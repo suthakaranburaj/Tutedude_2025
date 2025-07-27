@@ -54,7 +54,7 @@ export const getAllSupplier = async () => {
   return response.data;
 }
 
-export const createOrder = async () => {
-  const response = await apiClient.post("/order");
+export const createOrder = async (payload) => {
+  const response = await apiClient.post("/order",payload);
   return response.data;
 }

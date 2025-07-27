@@ -5,135 +5,189 @@ import InventoryItem from "../models/inventoryItem.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendResponse } from "../utils/apiResonse.js";
 import { statusType } from "../utils/statusType.js";
+import mongoose from "mongoose";
+
 
 // Create a new order
 export const createOrder = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
-    const {
-        supplierId,
-        items,
-        deliveryLocation,
-        preferredDeliveryTime,
-        paymentMethod,
-        specialInstructions
-    } = req.body;
 
-    paymentMethod = "upi";
+    // console.log(req.body);
 
-    // Validate input
-    if (!supplierId || !items || items.length === 0 || !deliveryLocation || !paymentMethod) {
-        return sendResponse(
-            res,
-            false,
-            null,
-            "Supplier ID, items, delivery location, and payment method are required",
-            statusType.BAD_REQUEST
-        );
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Check vendor status
-    // console.log("User ID:", userId);
-    // console.log("Supplier ID:", supplierId);
-    const vendor = await Vendor.findOne({ userId: userId });
-    // console.log("Vendor:", vendor);
-    if (!vendor || !vendor.canOrderSupply) {
-        return sendResponse(
-            res,
-            false,
-            null,
-            "Vendor is not authorized to place orders",
-            statusType.FORBIDDEN
-        );
-    }
+    try {
+        const userId = req.user._id;
+        const { supplierId, items, deliveryLocation, preferredDeliveryTime } = req.body;
+        const paymentMethod = req.body.paymentMethod || "upi";
+        const specialInstructions = req.body.specialInstructions || "";
 
-    // Calculate total and validate items
-    let totalAmount = 0;
-    const orderItems = [];
-    const supplier = await Supplier.findOne({ userId: supplierId });
-    console.log("Supplier:", supplier);
-    for (const item of items) {
-        const inventoryItem = supplier.inventory.find((i) => i._id.toString() === item.itemId);
-        if (!inventoryItem) {
-            return sendResponse(
-                res,
-                false,
-                null,
-                `Inventory item not found: ${item.itemId}`,
-                statusType.NOT_FOUND
-            );
+        // Validate input
+        if (!supplierId || !items?.length || !deliveryLocation) {
+            await session.abortTransaction();
+            return sendResponse(res, false, null, "Missing required fields", statusType.BAD_REQUEST);
+        }
+        console.log(1);
+
+        // Verify vendor
+        const vendor = await Vendor.findOne({ userId }).session(session);
+        if (!vendor?.canOrderSupply) {
+            await session.abortTransaction();
+            return sendResponse(res, false, null, "Vendor not authorized", statusType.FORBIDDEN);
         }
 
-        if (inventoryItem.quantity < item.quantity) {
-            return sendResponse(
-                res,
-                false,
-                null,
-                `Insufficient stock for item: ${inventoryItem.itemName}`,
-                statusType.BAD_REQUEST
-            );
+        console.log(2);
+
+        // Find supplier
+        const supplier = await Supplier.findOne({ userId: supplierId }).session(session);
+        if (!supplier) {
+            console.log(12)
+            await session.abortTransaction();
+            return sendResponse(res, false, null, "Supplier not found", statusType.NOT_FOUND);
         }
 
-        const itemTotal = inventoryItem.price * item.quantity;
-        totalAmount += itemTotal;
 
-        orderItems.push({
-            itemId: item.itemId,
-            quantity: item.quantity,
-            priceAtOrder: inventoryItem.price,
-            itemName: inventoryItem.itemName,
-            unit: inventoryItem.unit
+        console.log(3);
+
+        // Process items
+        let totalAmount = 0;
+        const orderItems = [];
+
+        for (const item of items) {
+            // Find the inventory item
+            console.log(item.itemId);
+            const inventoryItem = await InventoryItem.findOne({ _id: item.itemId }).session(session);
+            console.log("Inv Item", inventoryItem);
+
+            if (!inventoryItem) {
+                console.log(9)
+                await session.abortTransaction();
+                return sendResponse(res, false, null, `Item ${item.itemId} not found`, statusType.NOT_FOUND);
+            }
+
+            // Verify the item belongs to this supplier
+            if (!supplier.inventory.includes(item.itemId)) {
+                console.log(10)
+                await session.abortTransaction();
+                return sendResponse(res, false, null, `Item ${item.itemId} not in supplier inventory`, statusType.BAD_REQUEST);
+            }
+
+            console.log("lol")
+            console.log(inventoryItem.quantity)
+            console.log(item.quantity);
+
+            if (inventoryItem.quantity < item.quantity) {
+                console.log(11)
+                await session.abortTransaction();
+                return sendResponse(res, false, null, `Insufficient stock for ${inventoryItem.itemName}`, statusType.BAD_REQUEST);
+            }
+
+            totalAmount += inventoryItem.price * item.quantity;
+            orderItems.push({
+                itemId: item.itemId,
+                quantity: item.quantity,
+                priceAtOrder: inventoryItem.price,
+                itemName: inventoryItem.itemName,
+                unit: inventoryItem.unit
+            });
+        }
+
+
+        console.log(4);
+
+        // Create order
+        const newOrder = new Order({
+            vendor: userId,
+            supplier: supplierId,
+            items: orderItems,
+            totalAmount,
+            deliveryLocation: {
+                type: "Point",
+                coordinates: [deliveryLocation.lng, deliveryLocation.lat],
+                address: deliveryLocation.address
+            },
+            preferredDeliveryTime,
+            paymentMethod,
+            specialInstructions,
+            status: "pending",
+            paymentStatus: "pending"
         });
-    }
 
-    // Create order
-    const newOrder = new Order({
-        vendor: userId,
-        supplier: supplierId,
-        items: orderItems,
-        totalAmount,
-        deliveryLocation: {
-            type: "Point",
-            coordinates: [deliveryLocation.lng, deliveryLocation.lat],
-            address: deliveryLocation.address
-        },
-        preferredDeliveryTime,
-        paymentMethod,
-        specialInstructions
-    });
 
-    const savedOrder = await newOrder.save();
+        console.log(5);
 
-    // Update Vendor order history
-    await Vendor.findOneAndUpdate(
-        { user: userId },
-        {
-            $push: {
-                orderHistory: savedOrder._id,
-                orderTracking: {
-                    orderId: savedOrder._id,
-                    status: "pending",
-                    estimatedDelivery: preferredDeliveryTime
-                }
-            }
-        }
-    );
+        const savedOrder = await newOrder.save({ session });
 
-    // Update Supplier order history
-    await Supplier.findByIdAndUpdate(supplierId, {
-        $push: { orderHistory: savedOrder._id }
-    });
-
-    // Update inventory quantities inside Supplier document
-    for (const item of items) {
-        await Supplier.updateOne(
-            { userId: supplierId, "inventory._id": item.itemId },
+        // Update vendor
+        await Vendor.findOneAndUpdate(
+            { userId },
             {
-                $inc: { "inventory.$.quantity": -item.quantity }
-            }
+                $push: {
+                    orderHistory: savedOrder._id,
+                    orderTracking: {
+                        orderId: savedOrder._id,
+                        status: "pending",
+                        estimatedDelivery: preferredDeliveryTime,
+                        createdAt: new Date()
+                    }
+                }
+            },
+            { session }
         );
-    }
 
-    return sendResponse(res, true, savedOrder, "Order created successfully", statusType.CREATED);
+
+        console.log(6);
+
+        // Update supplier order history
+        await Supplier.findByIdAndUpdate(
+            supplierId,
+            {
+                $push: {
+                    orderHistory: savedOrder._id,
+                    orderTracking: {
+                        orderId: savedOrder._id,
+                        status: "pending",
+                        vendorId: userId,
+                        estimatedDelivery: preferredDeliveryTime
+                    }
+                }
+            },
+            { session }
+        );
+
+
+        console.log(7);
+
+        // Update inventory items
+        for (const item of items) {
+            await InventoryItem.findByIdAndUpdate(
+                item.itemId,
+                {
+                    $inc: { quantity: -item.quantity },
+                    $set: { lastUpdated: new Date() }
+                },
+                { session }
+            );
+        }
+
+        await session.commitTransaction();
+
+        console.log(8);
+
+        return sendResponse(res, true, savedOrder, "Order created successfully", statusType.CREATED);
+
+    } catch (error) {
+        await session.abortTransaction();
+        console.error("Order creation error:", error);
+
+        if (error instanceof mongoose.Error.CastError) {
+            return sendResponse(res, false, null, "Invalid data format", statusType.BAD_REQUEST);
+        }
+
+        return sendResponse(res, false, null, "Internal server error", statusType.INTERNAL_SERVER_ERROR);
+    } finally {
+        session.endSession();
+    }
 });
 
 // Update order status

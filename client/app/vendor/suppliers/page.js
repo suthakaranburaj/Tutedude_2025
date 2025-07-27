@@ -169,54 +169,46 @@ export default function SupplierList() {
     };
 
     const checkOut = async () => {
-        // Validate delivery location
-        if (!deliveryLocation.address || !deliveryLocation.lat || !deliveryLocation.lng) {
-            showNotification("Please enter complete delivery location information");
-            return;
-        }
-
         try {
+            // Validate delivery location
+            if (!deliveryLocation.address || !deliveryLocation.lat || !deliveryLocation.lng) {
+                showNotification("Please enter complete delivery location information");
+                return;
+            }
+
             const orderData = {
-                supplierId: selectedSupplier._id,
+                supplierId: selectedSupplier.userId,
                 items: cart.map(item => ({
                     itemId: item.itemId,
                     quantity: item.quantity,
-                    price: item.price,
                     name: item.name,
                     unit: item.unit,
-                    supplierId: item.supplierId,
-                    supplierName: item.supplierName
+                    price: item.price
                 })),
                 deliveryLocation: {
                     lat: deliveryLocation.lat,
                     lng: deliveryLocation.lng,
                     address: deliveryLocation.address
                 },
-                preferredDeliveryTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Default: 24h from now
+                preferredDeliveryTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h from now
                 paymentMethod: "upi",
                 specialInstructions: specialInstructions || ""
             };
 
-            // In a real app, you would call your API endpoint here
-            // console.log("Order data to be submitted:", orderData);
+            console.log("Submitting order data:", orderData); // Debug log
 
-            // Simulate API call
-            // showNotification("Order created successfully!");
-            // setCart([]);
+            const response = await createOrder(orderData);
 
-            // For demo purposes, we're just logging to console
-            // In production, you would do:
-            const response = await createOrder(cart);
-            const result = await response.json();
-            if (response.ok) {
-              showNotification("Order created successfully!");
-              setCart([]);
+            if (response?.success) { // Match your backend response structure
+                showNotification(response.message || "Order created successfully!");
+                setCart([]);
+                // Optional: redirect to orders page
             } else {
-              showNotification(result.message || "Failed to create order");
+                throw new Error(response?.message || 'Order creation failed');
             }
         } catch (error) {
-            showNotification("An error occurred while creating the order");
             console.error("Checkout error:", error);
+            showNotification(error.message || "Failed to create order. Please try again.");
         }
     };
 
