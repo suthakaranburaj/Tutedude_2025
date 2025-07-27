@@ -25,14 +25,15 @@ export default function FeedbackPage() {
 
 
   useEffect(() => {
-    const vendorId = searchParams.get("vendorId")
+    const vendorId = searchParams.get("vendorId");
     if (vendorId) {
-      fetchVendorDetails()
+      fetchVendorDetails(vendorId);
     } else {
-      fetchVendors()
-      setShowVendorSelect(true)
+      fetchVendors();
+      setShowVendorSelect(true);
     }
-  }, [vendorId])
+  }, [searchParams]);
+
 
   const fetchVendorDetails = async () => {
     try {
