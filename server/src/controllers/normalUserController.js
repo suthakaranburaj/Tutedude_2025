@@ -6,6 +6,7 @@ import User from "../models/user.js";
 import Vendor from "../models/vendor.js";
 import Feedback from "../models/feedback.js";
 import Rating from "../models/rating.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Get all vendors
 export const getAllVendors = asyncHandler(async (req, res) => {
@@ -50,28 +51,112 @@ export const getAllVendors = asyncHandler(async (req, res) => {
 
 // Add feedback for a vendor
 export const addFeedback = asyncHandler(async (req, res) => {
-    const { vendorId, comment } = req.body;
+    const { vendorId, comment, rating } = req.body;
     const userId = req.user._id;
 
-    if (!vendorId || !comment) {
+    if (!vendorId || !comment || !rating) {
         return sendResponse(
             res,
             false,
             null,
-            "Vendor ID and comment are required",
+            "Vendor ID, comment, and rating are required",
             statusType.BAD_REQUEST
         );
+    }
+
+    if (rating < 1 || rating > 5) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Rating must be between 1 and 5",
+            statusType.BAD_REQUEST
+        );
+    }
+
+    // Check if user has already submitted feedback for this vendor
+    const existingFeedback = await Feedback.findOne({ userId, vendorId });
+    if (existingFeedback) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "You have already submitted feedback for this vendor",
+            statusType.BAD_REQUEST
+        );
+    }
+
+    let imageUrls = [];
+
+    // Handle image uploads if present
+    if (req.files && req.files.images && Array.isArray(req.files.images)) {
+        for (const file of req.files.images) {
+            const uploadResult = await uploadOnCloudinary(file.path);
+            if (uploadResult?.secure_url) {
+                imageUrls.push(uploadResult.secure_url);
+            }
+        }
     }
 
     const feedback = new Feedback({
         userId,
         vendorId,
-        comment
+        comment,
+        rating,
+        images: imageUrls
     });
 
     await feedback.save();
 
+    // Also update the rating in the Rating collection
+    let existingRating = await Rating.findOne({ userId, vendorId });
+    if (existingRating) {
+        existingRating.rating = rating;
+        await existingRating.save();
+    } else {
+        existingRating = new Rating({
+            userId,
+            vendorId,
+            rating
+        });
+        await existingRating.save();
+    }
+
+    // Update vendor's average rating
+    const ratings = await Rating.find({ vendorId });
+    const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+
+    await Vendor.findByIdAndUpdate(vendorId, {
+        averageRating: avgRating.toFixed(1)
+    });
+
     return sendResponse(res, true, feedback, "Feedback added successfully", statusType.CREATED);
+});
+
+// Check if user has already submitted feedback for a vendor
+export const checkUserFeedback = asyncHandler(async (req, res) => {
+    const { vendorId } = req.params;
+    const userId = req.user._id;
+
+    if (!vendorId) {
+        return sendResponse(
+            res,
+            false,
+            null,
+            "Vendor ID is required",
+            statusType.BAD_REQUEST
+        );
+    }
+
+    const existingFeedback = await Feedback.findOne({ userId, vendorId });
+    
+    return sendResponse(
+        res,
+        true,
+        { hasFeedback: !!existingFeedback, feedback: existingFeedback },
+        existingFeedback ? "User has already submitted feedback" : "User can submit feedback",
+        statusType.SUCCESS
+    );
 });
 
 // Rate a vendor

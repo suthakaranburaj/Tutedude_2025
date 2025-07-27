@@ -17,6 +17,16 @@ const feedbackSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+        required: true
+    },
+    images: [{
+        type: String, // URLs to uploaded images
+        required: false
+    }],
     createdAt: {
         type: Date,
         default: Date.now
