@@ -23,7 +23,6 @@ export default function VendorsPage() {
   })
   const [vendorFeedbackStatus, setVendorFeedbackStatus] = useState({})
 
-
   const router = useRouter()
 
   useEffect(() => {
@@ -89,8 +88,6 @@ export default function VendorsPage() {
       page: newPage
     }))
   }
-
-
 
   const getCuisineTypeLabel = (type) => {
     const labels = {
@@ -245,9 +242,15 @@ export default function VendorsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vendors.map((vendor) => (
               <div 
-                onClick={() => router.push(`/user/vendors/${vendor._id}`)}
+                onClick={(e) => {
+                  // Ignore clicks inside buttons
+                  if (!e.target.closest('button')) {
+                    router.push(`/user/vendors/${vendor._id}`)
+                  }
+                }}
                 key={vendor._id} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 {/* Vendor Image */}
                 <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 flex items-center justify-center">
                   {vendor.userId?.image ? (
@@ -269,7 +272,13 @@ export default function VendorsPage() {
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                       {vendor.businessName || 'Unnamed Vendor'}
                     </h3>
-                    <button className="text-gray-400 hover:text-red-500 transition-colors">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Handle favorite functionality here
+                      }}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                    >
                       <Heart className="w-5 h-5" />
                     </button>
                   </div>
@@ -328,7 +337,10 @@ export default function VendorsPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => router.push(`/user/feedback?vendorId=${vendor._id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/user/feedback?vendorId=${vendor._id}`)
+                        }}
                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
                       >
                         <MessageCircle className="w-4 h-4 mr-2" />
@@ -379,8 +391,6 @@ export default function VendorsPage() {
           </div>
         )}
       </div>
-
-
     </div>
   )
-} 
+}

@@ -132,7 +132,7 @@ export default function VendorPage() {
               </div>
             </div>
 
-            <button
+            {/* <button
               onClick={() =>
                 router.push(`/user/feedback/new?vendorId=${vendorId}`)
               }
@@ -140,7 +140,7 @@ export default function VendorPage() {
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               Give Review
-            </button>
+            </button> */}
           </div>
         </div>
 
