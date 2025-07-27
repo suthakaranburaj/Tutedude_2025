@@ -1,15 +1,16 @@
-import './globals.css'
-import { Inter } from 'next/font/google'
-import { ThemeProvider } from '@/components/theme/ThemeProvider'
-import { AuthProvider } from '@/components/auth/AuthProvider'
-import { Toaster } from 'react-hot-toast'
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Toaster } from "react-hot-toast";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: 'Next.js Hackathon Template',
-  description: 'A comprehensive Next.js template for hackathons with authentication, responsive design, and modern UI',
-}
+  title: "StreetConnect – Empowering Street Food Ecosystems",
+  description:
+    "A digital platform fostering transparency and trust between street food vendors, suppliers, and users. Empowering local businesses to connect, source, and grow together.",
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -28,9 +29,9 @@ export default function RootLayout({ children }) {
               toastOptions={{
                 duration: 4000,
                 style: {
-                  background: 'var(--background)',
-                  color: 'var(--foreground)',
-                  border: '1px solid var(--border)',
+                  background: "var(--background)",
+                  color: "var(--foreground)",
+                  border: "1px solid var(--border)",
                 },
               }}
             />
@@ -38,5 +39,5 @@ export default function RootLayout({ children }) {
         </ThemeProvider>
       </body>
     </html>
-  )
-} 
+  );
+}

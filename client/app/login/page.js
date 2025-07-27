@@ -1,82 +1,101 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useAuth } from '@/components/auth/AuthProvider'
-import { Eye, EyeOff, Phone, Lock, ArrowRight, Sparkles, AlertCircle } from 'lucide-react'
-import { Navbar } from '@/components/layout/Navbar'
-import { loginUser } from '@/services/authServices' // Import the service
-import { RepeatOneSharp } from '@mui/icons-material'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  Eye,
+  EyeOff,
+  Phone,
+  Lock,
+  ArrowRight,
+  Sparkles,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { Navbar } from "@/components/layout/Navbar";
+import { loginUser } from "@/services/authServices";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    phone: '',
-    pin: ''
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
-  const { login } = useAuth()
+    phone: "",
+    pin: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false);
+  const router = useRouter();
+  const { login } = useAuth();
+
+  const demoAccounts = [
+    { label: "Vendor", phone: "+919012345678", pin: "1234" },
+    { label: "Agent", phone: "9898988888", pin: "1234" },
+    { label: "Normal User", phone: "+919123456789", pin: "1234" },
+    { label: "Supplier", phone: "+919765432109", pin: "1234" },
+  ];
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    })
-    if (error) setError('')
-  }
+      [e.target.name]: e.target.value,
+    });
+    if (error) setError("");
+  };
 
   const validateForm = () => {
     if (!formData.phone.trim()) {
-      setError('Phone number is required')
-      return false
+      setError("Phone number is required");
+      return false;
     }
-    // if (!/^\d{13}$/.test(formData.phone)) {
-    //   setError('Please enter a valid 13-digit phone number')
-    //   return false
-    // }
     if (!formData.pin) {
-      setError('PIN is required')
-      return false
+      setError("PIN is required");
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
-    
-    setIsLoading(true)
-    setError('')
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setError("");
 
     try {
-      // Call the login service
       const response = await loginUser({
         phone: formData.phone,
-        pin: formData.pin
-      })
+        pin: formData.pin,
+      });
 
       if (response.data != null) {
-        localStorage.setItem('User', JSON.stringify(response.data.data))
+        localStorage.setItem("User", JSON.stringify(response.data.data));
         localStorage.setItem(
           "Token",
           JSON.stringify(response.data.accessToken)
         );
-        router.push('/')
+        router.push("/");
       } else {
-        setError(response.error || 'Login failed')
+        setError(response.error || "Login failed");
       }
     } catch (err) {
       console.log(err);
-      
-      setError(err.response?.error || 'Login failed. Please try again.')
+      setError(err.response?.error || "Login failed. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleDemoLogin = (account) => {
+    setFormData({
+      phone: account.phone,
+      pin: account.pin,
+    });
+    setShowDemoAccounts(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -92,9 +111,9 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {/* <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Welcome back
-            </h2>
+            </h2> */}
             <p className="text-gray-600 dark:text-gray-300">
               Sign in to your account to continue
             </p>
@@ -105,14 +124,19 @@ export default function LoginPage() {
             {error && (
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
+                <p className="text-red-700 dark:text-red-400 text-sm">
+                  {error}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Phone Field */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Phone Number
                 </label>
                 <div className="relative">
@@ -135,7 +159,10 @@ export default function LoginPage() {
 
               {/* PIN Field */}
               <div>
-                <label htmlFor="pin" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="pin"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   PIN
                 </label>
                 <div className="relative">
@@ -145,7 +172,7 @@ export default function LoginPage() {
                   <input
                     id="pin"
                     name="pin"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.pin}
                     onChange={handleChange}
@@ -157,7 +184,11 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -182,9 +213,73 @@ export default function LoginPage() {
             </form>
           </div>
 
+          {/* Demo Accounts Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <button
+              onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+              className="w-full flex items-center justify-between p-4 text-left font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors duration-200"
+            >
+              <div className="flex items-center space-x-2">
+                <span>Demo Accounts</span>
+                <div className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-full">
+                  Click to show
+                </div>
+              </div>
+              {showDemoAccounts ? (
+                <ChevronUp className="h-5 w-5" />
+              ) : (
+                <ChevronDown className="h-5 w-5" />
+              )}
+            </button>
+
+            {showDemoAccounts && (
+              <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-blue-50/30 dark:bg-gray-700/50">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  Use these sample credentials for testing:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {demoAccounts.map((account, index) => (
+                    <div
+                      key={index}
+                      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow duration-200"
+                      onClick={() => handleDemoLogin(account)}
+                    >
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {account.label}
+                      </div>
+                      <div className="flex justify-between mt-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          Phone:
+                        </div>
+                        <div className="text-sm font-mono">{account.phone}</div>
+                      </div>
+                      <div className="flex justify-between">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          PIN:
+                        </div>
+                        <div className="text-sm font-mono">{account.pin}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={handleSubmit}
+                    className="inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-200"
+                  >
+                    Auto-fill & Sign In
+                    <ArrowRight className="ml-1 w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-300">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 href="/register"
                 className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors duration-200"
@@ -196,5 +291,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
