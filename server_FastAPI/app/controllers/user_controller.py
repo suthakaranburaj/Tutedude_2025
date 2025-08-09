@@ -1,27 +1,28 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.schemas.user import UserCreate, UserResponse, UserLogin
 from app.utils.api_response import ApiResponse
 from app.utils.security import create_access_token, create_refresh_token
 from app.helper.common import validate_phone
 from app.utils.cloudinary import upload_to_cloudinary
-from app.db import db
+from app.db import get_db
 from datetime import datetime
 import bcrypt
 
 router = APIRouter()
 
-async def get_user_by_phone(phone: str) -> dict:
+# Helper functions with db dependency injection
+async def get_user_by_phone(db: AsyncIOMotorDatabase, phone: str) -> dict:
     return await db["users"].find_one({"phone": phone})
 
-async def create_user(user_data: dict) -> dict:
+async def create_user(db: AsyncIOMotorDatabase, user_data: dict) -> dict:
     result = await db["users"].insert_one(user_data)
-    new_user = await db["users"].find_one({"_id": result.inserted_id})
-    return new_user
+    return await db["users"].find_one({"_id": result.inserted_id})
 
 @router.post("/register", response_model=ApiResponse[UserResponse])
 async def register_user(
-    user: UserCreate = Depends(),
+    user: UserCreate,
+    db: AsyncIOMotorDatabase = Depends(get_db),
     image: UploadFile = File(None)
 ):
     # Phone validation
@@ -29,7 +30,8 @@ async def register_user(
         return ApiResponse.error("Invalid phone number", 400)
     
     # Check existing user
-    if await get_user_by_phone(user.phone):
+    existing_user = await get_user_by_phone(db, user.phone)
+    if existing_user:
         return ApiResponse.error("User already exists", 400)
     
     # Hash PIN
@@ -38,18 +40,23 @@ async def register_user(
     # Upload image if exists
     image_url = ""
     if image:
-        image_url = await upload_to_cloudinary(await image.read())
+        image_bytes = await image.read()
+        if image_bytes:
+            image_url = await upload_to_cloudinary(image_bytes)
     
-    # Create user
+    # Create user data
     user_data = {
         **user.dict(exclude={"pin"}),
         "pin": hashed_pin.decode(),
         "image": image_url,
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
+        "token_version": 0,
+        "refresh_token": ""
     }
     
-    new_user = await create_user(user_data)
+    # Create user
+    new_user = await create_user(db, user_data)
     
     # Generate tokens
     access_token = create_access_token(str(new_user["_id"]), new_user["role"])
@@ -65,12 +72,12 @@ async def register_user(
         {"$set": {"refresh_token": refresh_token}}
     )
     
-    # Prepare response
-    response_data = {
-        **UserResponse(**new_user).dict(),
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }
+    # Prepare response data
+    response_data = UserResponse(
+        **new_user,
+        access_token=access_token,
+        refresh_token=refresh_token
+    ).dict()
     
     return ApiResponse.success(
         data=response_data,
@@ -78,13 +85,16 @@ async def register_user(
     )
 
 @router.post("/login", response_model=ApiResponse[UserResponse])
-async def login_user(credentials: UserLogin):
+async def login_user(
+    credentials: UserLogin,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
     # Phone validation
     if not validate_phone(credentials.phone):
         return ApiResponse.error("Invalid phone number", 400)
     
     # Find user
-    user = await get_user_by_phone(credentials.phone)
+    user = await get_user_by_phone(db, credentials.phone)
     if not user:
         return ApiResponse.error("User not found", 404)
     
@@ -106,12 +116,12 @@ async def login_user(credentials: UserLogin):
         {"$set": {"refresh_token": refresh_token}}
     )
     
-    # Prepare response
-    response_data = {
-        **UserResponse(**user).dict(),
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }
+    # Prepare response data
+    response_data = UserResponse(
+        **user,
+        access_token=access_token,
+        refresh_token=refresh_token
+    ).dict()
     
     return ApiResponse.success(
         data=response_data,

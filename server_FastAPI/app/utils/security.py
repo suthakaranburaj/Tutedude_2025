@@ -7,7 +7,7 @@ def create_access_token(user_id: str, role: str) -> str:
     payload = {
         "user_id": user_id,
         "role": role,
-        "exp": datetime.utcnow() + timedelta(minutes=15)
+        "exp": datetime.utcnow() + timedelta(minutes=15)  # 👈 Use timedelta directly
     }
     return jwt.encode(payload, settings.access_token_secret, algorithm="HS256")
 
